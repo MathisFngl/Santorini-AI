@@ -1,4 +1,5 @@
-from .Pion import Pion
+from Game.Pion import Pion
+import random
 
 
 class Joueur:
@@ -35,7 +36,7 @@ class Joueur:
     def isValidMovement(self, pion, x, y):
         new_x = pion.x + x
         new_y = pion.y + y
-        if new_x < 0 or new_x > 5 and new_y < 0 or new_y > 5:
+        if new_x < 0 or new_x >= 5 or new_y < 0 or new_y >= 5:
             print("Cannot Move Here: Out of Bounds")
             return False
         if self.game.tableau_de_jeu[new_x][new_y] == 4:
@@ -112,3 +113,20 @@ class Joueur:
             if pion.isValidBuilding(building[0], building[1]):
                 pion.build(building[0], building[1])
                 did_build = True
+
+class AIPlayer(Joueur):
+    def nameDefinition(self):
+        return "AI"
+
+    def defineBothPions(self):
+        self.pion1 = self.randomPionDefinition()
+        self.pion2 = self.randomPionDefinition()
+
+    def randomPionDefinition(self):
+        valid_position = False
+        while not valid_position:
+            x = random.randint(0, 4)
+            y = random.randint(0, 4)
+            if not self.game.is_occupied(x, y):
+                valid_position = True
+        return Pion(self, x, y)
