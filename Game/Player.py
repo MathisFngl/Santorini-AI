@@ -3,21 +3,23 @@ import random
 
 
 class Joueur:
-    def __init__(self, game):
+    def __init__(self, game, skip_initialization = False):
         self.game = game
-        self.name = self.nameDefinition()
-        self.pion1 = Pion(self, -1, -1)
-        self.pion2 = Pion(self, -1, -1)
-        self.defineBothPions()
+        if not skip_initialization:
+            self.name = self.nameDefinition()
+            self.pion1 = Pion(self, -1, -1, 1)
+            self.pion2 = Pion(self, -1, -1, 2)
+            self.defineBothPions()
+
 
     def nameDefinition(self):
         return input("Player's name :")
 
     def defineBothPions(self):
-        self.pion1 = self.pionDefinition()
-        self.pion2 = self.pionDefinition()
+        self.pion1 = self.pionDefinition(1)
+        self.pion2 = self.pionDefinition(1)
 
-    def pionDefinition(self):
+    def pionDefinition(self, pionId):
         x = -1
         y = -1
         valid_position = False
@@ -31,21 +33,24 @@ class Joueur:
                     print("This Square is already occupied")
             else:
                 print("Location out of bounds")
-        return Pion(self, x, y)
+        return Pion(self, x, y, pionId)
 
     def isValidMovement(self, pion, x, y):
         new_x = pion.x + x
         new_y = pion.y + y
         if new_x < 0 or new_x >= 5 or new_y < 0 or new_y >= 5:
-            print("Cannot Move Here: Out of Bounds")
+            if self.name != "AI":
+                print("Cannot Move Here: Out of Bounds")
             return False
         if self.game.tableau_de_jeu[new_x][new_y] == 4:
-            print("Cannot Move Here: Cannot be on a Dome")
+            if self.name != "AI":
+                print("Cannot Move Here: Cannot be on a Dome")
             return False
         for player in self.game.players:
             if (player.pion1.x == new_x and player.pion1.y == new_y) or (
                     player.pion2.x == new_x and player.pion2.y == new_y):
-                print("Cannot Move Here: A builder is on this square.")
+                if self.name != "AI":
+                    print("Cannot Move Here: A builder is on this square.")
                 return False
         return True
 
@@ -114,19 +119,27 @@ class Joueur:
                 pion.build(building[0], building[1])
                 did_build = True
 
+    def playerCopy(self):
+        new_player = Joueur(self.game, skip_initialization=True)
+        new_player.name = self.name
+        new_player.pion1 = self.pion1.pionCopy()
+        new_player.pion2 = self.pion2.pionCopy()
+        return new_player
+
 class AIPlayer(Joueur):
     def nameDefinition(self):
         return "AI"
 
     def defineBothPions(self):
-        self.pion1 = self.randomPionDefinition()
-        self.pion2 = self.randomPionDefinition()
+        self.pion1 = self.randomPionDefinition(1)
+        self.pion2 = self.randomPionDefinition(2)
 
-    def randomPionDefinition(self):
+    def randomPionDefinition(self, pionId):
+        global y, x
         valid_position = False
         while not valid_position:
             x = random.randint(0, 4)
             y = random.randint(0, 4)
             if not self.game.is_occupied(x, y):
                 valid_position = True
-        return Pion(self, x, y)
+        return Pion(self, x, y, pionId)

@@ -2,11 +2,11 @@ from .Player import Joueur, AIPlayer
 import Game.MinMax as MinMax
 
 class Game:
-    def __init__(self):
-        self.players = []
-        self.tableau_de_jeu = [[0 for i in range(5)] for j in range(5)]
-        self.best_moves = []  # Store the list of best moves for the AI
-        self.play()
+    def __init__(self, skip_initialization=False):
+        if not skip_initialization:
+            self.players = []
+            self.tableau_de_jeu = [[0 for i in range(5)] for j in range(5)]
+            self.play()
 
     def play(self):
         win = False
@@ -33,7 +33,7 @@ class Game:
                     self.printBoard()
                     print()
                     player.buildingHandler()
-                    self.best_moves = []  # Clear the best moves after the opponent's turn
+
 
 
     def choosePlayer(self):
@@ -60,18 +60,16 @@ class Game:
                 return True
         return False
 
-    def ai_turn(self):
-        if not self.best_moves:
-            initial_state = MinMax.GameState(self, 1)
-            self.best_moves = MinMax.get_best_moves(initial_state, depth=3)
+    def gameCopy(self):
+        new_game = Game(skip_initialization=True)
+        new_game.players = [player.playerCopy() for player in self.players]
+        new_game.tableau_de_jeu = [row[:] for row in self.tableau_de_jeu]
+        return new_game
 
-        if self.best_moves:
-            best_move = self.best_moves.pop(0)
-            pion, dx, dy, bx, by = best_move
-            self.players[1].move(pion, dx, dy)
-            pion.build(bx, by)
-            print(
-                f"AI moved a builder from ({pion.x - dx}, {pion.y - dy}) to ({pion.x}, {pion.y}) and built on ({pion.x + bx}, {pion.y + by})")
+    def ai_turn(self):
+        state = MinMax.GameState(self, current_player=1)
+
+        best_eval, best_moves = MinMax.minimax(state, 3, float('-inf'), float('inf'), True)
 
         #if self.players[1].didWin(pion):
             #print("AI won!")
