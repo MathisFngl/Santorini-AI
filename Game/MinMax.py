@@ -35,6 +35,7 @@ class GameState:
         for player in self.game.players:
             for pion in [player.pion1, player.pion2]:
                 if self.game.tableau_de_jeu[pion.x][pion.y] == 3:
+                    print("Player ", player.name, " has won!")
                     return True  # A player has won by reaching the third level
         return False
 
