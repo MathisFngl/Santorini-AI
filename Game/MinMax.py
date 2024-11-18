@@ -55,6 +55,7 @@ def minimax(state, depth, alpha, beta, maximizing_player):
 
     moves = state.get_possible_moves()
     if maximizing_player:
+        print("Maximizing player")
         max_eval = float('-inf')
         best_move_sequence = []
         for move in moves:
