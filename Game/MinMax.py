@@ -37,6 +37,7 @@ class GameState:
                 if self.game.tableau_de_jeu[pion.x][pion.y] == 3:
                     print("Player ", player.name, " has won!")
                     return True  # A player has won by reaching the third level
+        print("No player has won yet")
         return False
 
     def evaluate(self):
