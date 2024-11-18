@@ -25,10 +25,15 @@ class Pion:
         return True
 
     def build(self, x_build, y_build):
+        print("Building for ", self.player.name)
         new_x = self.x + x_build
         new_y = self.y + y_build
+        print("new_x : ", new_x)
+        print("new_y : ", new_y)
         if 0 <= new_x < 5 and 0 <= new_y < 5:
             self.player.game.tableau_de_jeu[new_x][new_y] += 1
+            print("debug build")
+            self.player.game.printBoard()
         else:
             print("Cannot Build Here: Out of Bounds")
 

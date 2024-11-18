@@ -63,7 +63,7 @@ class Game:
     def gameCopy(self):
         new_game = Game(skip_initialization=True)
         new_game.players = [player.playerCopy() for player in self.players]
-        new_game.tableau_de_jeu = [row[:] for row in self.tableau_de_jeu]
+        new_game.tableau_de_jeu = [row[:] for row in self.tableau_de_jeu]  # Deep copy of the board
         return new_game
 
     def ai_turn(self):
