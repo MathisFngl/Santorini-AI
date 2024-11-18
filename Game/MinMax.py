@@ -6,37 +6,54 @@ class GameState:
     def get_possible_moves(self):
         moves = []
         current_player = self.game.players[self.current_player]
-        for pion in [current_player.pion1, current_player.pion2]:
+        for move_pion in [current_player.pion1, current_player.pion2]:
             for dx in [-1, 0, 1]:
                 for dy in [-1, 0, 1]:
-                    if current_player.isValidMovement(pion, dx, dy):
-                        for bx in [-1, 0, 1]:
-                            for by in [-1, 0, 1]:
-                                if pion.isValidBuilding(bx, by):
-                                    moves.append((pion.pionID, dx, dy, bx, by))
+                    if current_player.isValidMovement(move_pion, dx, dy):
+                        for build_pion in [current_player.pion1, current_player.pion2]:
+                            for bx in [-1, 0, 1]:
+                                for by in [-1, 0, 1]:
+                                    if build_pion.isValidBuilding(bx, by):
+                                        moves.append((move_pion.pionID, dx, dy, build_pion.pionID, bx, by))
         return moves
 
-    def apply_move(self, pion, dx, dy, bx, by):
-        pionChoosen =  self.game.players[self.current_player].pion1 if pion == 1 else self.game.players[self.current_player].pion2
-        new_game = GameState(self.game.gameCopy(), self.current_player) # Create a deep copy of the game
-        print("Applying move: ", pion, dx, dy, bx, by)
-        current_player = new_game.game.players[new_game.current_player]
-        print("Current player apply: ", current_player.name)
+    def apply_move(self, move_pion_id, dx, dy, build_pion_id, bx, by):
+        new_game = self.game.gameCopy()  # Create a deep copy of the game
+        move_pion = new_game.players[self.current_player].pion1 if move_pion_id == 1 else new_game.players[self.current_player].pion2
+        build_pion = new_game.players[self.current_player].pion1 if build_pion_id == 1 else new_game.players[self.current_player].pion2
+        movePlayer = new_game.players[self.current_player]
+        print("Applying move: ", move_pion_id, dx, dy, build_pion_id, bx, by)
+        print("Current player apply: ", movePlayer.name)
         # Move the pion, ensuring the move is valid
-        if current_player.isValidMovement(pionChoosen, dx, dy):
-            current_player.move(pionChoosen, dx, dy)
+        if movePlayer.isValidMovement(move_pion, dx, dy):
+            print("Moving pion")
+            movePlayer.move(move_pion, dx, dy)
+        else:
+            print("Invalid move")
         # Build if valid
-        if pionChoosen.isValidBuilding(bx, by):
-            pionChoosen.build(bx, by)
-        new_game.game.printBoard()
+        if build_pion.isValidBuilding(bx, by):
+            print("build in", build_pion.x + bx, build_pion.y + by)
+            build_pion.build(bx, by)
+            print("Building")
+        else:
+            print("Invalid building")
+        new_game.printBoard()
         return GameState(new_game, (self.current_player + 1) % 2)
 
     def is_terminal(self):
+        if not hasattr(self.game, 'players') or not self.game.players:
+            print("Error: Game has no players!")
+            return False
         for player in self.game.players:
+            print(f"Checking player {player.name}")
             for pion in [player.pion1, player.pion2]:
                 if self.game.tableau_de_jeu[pion.x][pion.y] == 3:
                     print("Player ", player.name, " has won!")
                     return True  # A player has won by reaching the third level
+        # Check if the current player can move or build
+        if not self.get_possible_moves():
+            print(f"Player {self.game.players[self.current_player].name} has no valid moves and loses!")
+            return True
         print("No player has won yet")
         return False
 
@@ -47,6 +64,10 @@ class GameState:
                 score += self.game.tableau_de_jeu[pion.x][pion.y]  # Sum the heights of the buildings
         return score if self.current_player == 0 else -score  # Positive score for player 0, negative for player 1
 
+    def stateCopy(self):
+        new_game = self.game.gameCopy()
+        return GameState(new_game, self.current_player)
+
 def minimax(state, depth, alpha, beta, maximizing_player):
     print("Depth: ", depth)
     print("Current player:", state.current_player)
@@ -55,7 +76,6 @@ def minimax(state, depth, alpha, beta, maximizing_player):
 
     moves = state.get_possible_moves()
     if maximizing_player:
-        print("Maximizing player")
         max_eval = float('-inf')
         best_move_sequence = []
         for move in moves:

@@ -33,4 +33,9 @@ class Pion:
             print("Cannot Build Here: Out of Bounds")
 
     def pionCopy(self):
-        return Pion(self.player, self.x, self.y, self.pionID)
+        new_player = self.player
+        new_x = self.x
+        new_y = self.y
+        new_pionID = self.pionID
+        return Pion(new_player, new_x, new_y, new_pionID)
+

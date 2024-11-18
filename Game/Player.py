@@ -17,7 +17,7 @@ class Joueur:
 
     def defineBothPions(self):
         self.pion1 = self.pionDefinition(1)
-        self.pion2 = self.pionDefinition(1)
+        self.pion2 = self.pionDefinition(2)
 
     def pionDefinition(self, pionId):
         x = -1
@@ -135,11 +135,11 @@ class AIPlayer(Joueur):
         self.pion2 = self.randomPionDefinition(2)
 
     def randomPionDefinition(self, pionId):
-        global y, x
         valid_position = False
         while not valid_position:
             x = random.randint(0, 4)
             y = random.randint(0, 4)
             if not self.game.is_occupied(x, y):
-                valid_position = True
+                if pionId == 1 or (self.pion1.x != x or self.pion1.y != y):
+                    valid_position = True
         return Pion(self, x, y, pionId)
