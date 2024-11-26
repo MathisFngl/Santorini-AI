@@ -1,4 +1,5 @@
 from .Player import Joueur, AIPlayer
+from .Window import *
 import Game.MinMax as MinMax
 
 class Game:
@@ -13,6 +14,10 @@ class Game:
         self.choosePlayer()
         while not win:
             for player in self.players:
+
+                player_pos_params = self.generatePlayerPos()
+                render_grid(self.tableau_de_jeu, player_pos_params)
+
                 print()
                 print("Board State :")
                 self.printBoard()
@@ -54,11 +59,21 @@ class Game:
             print(f"{player.name}'s pawn 1 : ({player.pion1.x}:{player.pion1.y})")
             print(f"{player.name}'s pawn 2 : ({player.pion2.x}:{player.pion2.y})")
 
-    def is_occupied(self, x, y):
+    def isOccupied(self, x, y):
         for player in self.players:
             if (player.pion1.x == x and player.pion1.y == y) or (player.pion2.x == x and player.pion2.y == y):
                 return True
         return False
+
+    def generatePlayerPos(self):
+        pos = []
+        player1 = self.players[0]
+        pos.append((player1.pion1.x, player1.pion1.y, (255, 0, 0)))
+        pos.append((player1.pion2.x, player1.pion2.y, (255, 0, 0)))
+        player2 = self.players[1]
+        pos.append((player2.pion1.x, player2.pion1.y, (0, 0, 255)))
+        pos.append((player2.pion2.x, player2.pion2.y, (0, 0, 255)))
+        return pos
 
     def gameCopy(self):
         new_game = Game(skip_initialization=True)

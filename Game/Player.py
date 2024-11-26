@@ -27,7 +27,7 @@ class Joueur:
             x = int(input("Enter x pos of Pion :"))
             y = int(input("Enter y pos of Pion :"))
             if 0 <= x < 5 and 0 <= y < 5:
-                if (not self.game.is_occupied(x, y)) and not (self.pion1.x == x and self.pion1.y == y):
+                if (not self.game.isOccupied(x, y)) and not (self.pion1.x == x and self.pion1.y == y):
                     valid_position = True
                 else:
                     print("This Square is already occupied")
@@ -139,7 +139,7 @@ class AIPlayer(Joueur):
         while not valid_position:
             x = random.randint(0, 4)
             y = random.randint(0, 4)
-            if not self.game.is_occupied(x, y):
+            if not self.game.isOccupied(x, y):
                 if pionId == 1 or (self.pion1.x != x or self.pion1.y != y):
                     valid_position = True
         return Pion(self, x, y, pionId)
