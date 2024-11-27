@@ -106,13 +106,12 @@ class Joueur:
         print(f"New Pion Position: ({pion.x},{pion.y})")
         if self.didWin(pion):
             print("You won!")
-            return True
-        return False
+            return True, pion
+        return False,pion
 
-    def buildingHandler(self):
+    def buildingHandler(self,pion):
         did_build = False
         while not did_build:
-            pion = self.chooseBuilder("build")
             print(f"Current Pion Position: ({pion.x},{pion.y}")
             building = self.selectDirection("build")
             if pion.isValidBuilding(building[0], building[1]):

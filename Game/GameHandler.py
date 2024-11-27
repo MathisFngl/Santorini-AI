@@ -1,6 +1,7 @@
 from .Player import Joueur, AIPlayer
 from .Window import *
 import Game.MinMax as MinMax
+import copy
 
 class Game:
     def __init__(self, skip_initialization=False):
@@ -30,14 +31,15 @@ class Game:
                     print("AI turn ended")
                 else:
                     print(player.name + "'s turn :")
-                    if player.movementHandler():
+                    testMovementHandler, pion = player.movementHandler()
+                    if testMovementHandler:
                         win = True
                         break
                     print()
                     print("Board State :")
                     self.printBoard()
                     print()
-                    player.buildingHandler()
+                    player.buildingHandler(pion)
 
 
 
@@ -76,18 +78,35 @@ class Game:
         return pos
 
     def gameCopy(self):
-        new_game = Game(skip_initialization=True)
-        new_game.players = [player.playerCopy() for player in self.players]
-        new_game.tableau_de_jeu = [row[:] for row in self.tableau_de_jeu]  # Deep copy of the board
-        return new_game
+        return copy.deepcopy(self)
 
     def ai_turn(self):
         state = MinMax.GameState(self, current_player=1)
 
         best_eval, best_moves = MinMax.minimax(state, 3, float('-inf'), float('inf'), True)
 
-        #if self.players[1].didWin(pion):
-            #print("AI won!")
-            #return True
+        moveToApply = best_moves[0]
+        move_pion_id, dx, dy, build_pion_id, bx, by = moveToApply
+        move_pion = self.players[1].pion1 if move_pion_id == 1 else self.players[1].pion2
+        build_pion = self.players[1].pion1 if build_pion_id == 1 else self.players[1].pion2
+
+        # Move if valid
+        if self.players[1].isValidMovement(move_pion, dx, dy):
+            self.players[1].move(move_pion, dx, dy)
+        else:
+            print("Invalid move")
+            return False
+
+        # Build if valid
+        if build_pion.isValidBuilding(bx, by):
+            build_pion.build(bx, by)
+        else:
+            print("Invalid building")
+            return False
+
+        for pion in [self.players[1].pion1, self.players[1].pion2]:
+            if self.tableau_de_jeu[pion.x][pion.y] == 3:
+                print("AI won!")
+                return True
 
         return False

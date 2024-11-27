@@ -11,15 +11,14 @@ class GameState:
                 for dy in [-1, 0, 1]:
                     if (dx, dy) != (0, 0):
                         if current_player.isValidMovement(move_pion, dx, dy):
-                            for build_pion in [current_player.pion1, current_player.pion2]:
-                                build_pion_test = build_pion.pionCopy()
-                                build_pion_test.x = move_pion.x + dx
-                                build_pion_test.y = move_pion.y + dy
-                                for bx in [-1, 0, 1]:
-                                    for by in [-1, 0, 1]:
-                                        if (bx, by) != (0, 0):
-                                            if build_pion_test.isValidBuilding(bx, by):
-                                                moves.append((move_pion.pionID, dx, dy, build_pion.pionID, bx, by))
+                            build_pion_test = move_pion.pionCopy()
+                            build_pion_test.x = build_pion_test.x + dx
+                            build_pion_test.y = build_pion_test.y + dy
+                            for bx in [-1, 0, 1]:
+                                for by in [-1, 0, 1]:
+                                    if (bx, by) != (0, 0):
+                                        if build_pion_test.isValidBuilding(bx, by):
+                                            moves.append((move_pion.pionID, dx, dy, move_pion.pionID, bx, by))
         return moves
 
     def apply_move(self, move):
@@ -44,6 +43,8 @@ class GameState:
             new_game.printBoard()
         else:
             print("Invalid building")
+
+        print(f"New game state ID: {id(new_game)}")
         return GameState(new_game, (self.current_player + 1) % 2)  # Return the new game state with the next player
 
     def is_terminal(self):
