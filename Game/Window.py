@@ -14,13 +14,18 @@ def render_grid(array, circle_params):
     # Constants
     GRID_SIZE = 100  # Size of each cell
     MARGIN = 5  # Space between cells
-    WIDTH, HEIGHT = (GRID_SIZE + MARGIN) * 5, (GRID_SIZE + MARGIN) * 5
+    OFFSET = 20 #Margin for axes
+    WIDTH, HEIGHT = (GRID_SIZE + MARGIN) * 5 + OFFSET , (GRID_SIZE + MARGIN) * 5 + OFFSET
     SCREEN_COLOR = (0, 0, 0)  # Background color
+    AXIS_TEXT_COLOR = (255, 255, 255)  # White for axes and text
 
     # Create PyGame screen
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("5x5 Grid: White to Red Transition")
     screen.fill(SCREEN_COLOR)
+
+    # Font for text
+    font = pygame.font.Font(None, 36)
 
     # Validate input array
     if len(array) != 5 or not all(len(row) == 5 for row in array):
@@ -42,7 +47,36 @@ def render_grid(array, circle_params):
         # Convert grid coordinates (0 to 4) to pixel positions
         pixel_x = x * (GRID_SIZE + MARGIN) + GRID_SIZE // 2
         pixel_y = z * (GRID_SIZE + MARGIN) + GRID_SIZE // 2
-        pygame.draw.circle(screen, color, (pixel_x, pixel_y), 30)
+        pygame.draw.circle(screen, color, (pixel_x + OFFSET, pixel_y + OFFSET), 30)
+
+    def draw_axes():
+        # Draw horizontal axis (x)
+        pygame.draw.line(screen, AXIS_TEXT_COLOR, (OFFSET, OFFSET), (WIDTH - OFFSET, OFFSET), 2)
+        pygame.draw.polygon(screen, AXIS_TEXT_COLOR, [(WIDTH - OFFSET, OFFSET), (WIDTH - OFFSET - 10, OFFSET - 5), (WIDTH - OFFSET - 10, OFFSET + 5)])
+        # Draw vertical axis (y)
+        pygame.draw.line(screen, AXIS_TEXT_COLOR, (OFFSET, OFFSET), (OFFSET, HEIGHT - OFFSET), 2)
+        pygame.draw.polygon(screen, AXIS_TEXT_COLOR, [(OFFSET, HEIGHT - OFFSET), (OFFSET - 5, HEIGHT - OFFSET - 10), (OFFSET + 5, HEIGHT - OFFSET - 10)])
+
+        # Label axes
+        x_label = font.render("x", True, AXIS_TEXT_COLOR)
+        y_label = font.render("y", True, AXIS_TEXT_COLOR)
+        screen.blit(x_label, (WIDTH - OFFSET + 5, OFFSET - 20))
+        screen.blit(y_label, (OFFSET - 20, HEIGHT - OFFSET - 15))
+
+    def draw_labels():
+        # Draw numbers for x-axis
+        for i in range(5):
+            label = font.render(str(i), True, AXIS_TEXT_COLOR)
+            x = OFFSET + i * (GRID_SIZE + MARGIN) + GRID_SIZE // 2 - label.get_width() // 2
+            y = OFFSET - 25
+            screen.blit(label, (x, y))
+
+        # Draw numbers for y-axis
+        for i in range(5):
+            label = font.render(str(i), True, AXIS_TEXT_COLOR)
+            x = OFFSET - 20
+            y = OFFSET + i * (GRID_SIZE + MARGIN) + GRID_SIZE // 2 - label.get_height() // 2
+            screen.blit(label, (x, y))
 
     # Main render loop
     running = True
@@ -56,12 +90,15 @@ def render_grid(array, circle_params):
             for col in range(5):
                 value = array[row][col]
                 color = value_to_color(value)
-                x = col * (GRID_SIZE + MARGIN)
-                y = row * (GRID_SIZE + MARGIN)
+                x = col * (GRID_SIZE + MARGIN) + OFFSET
+                y = row * (GRID_SIZE + MARGIN)  + OFFSET
                 pygame.draw.rect(screen, color, (x, y, GRID_SIZE, GRID_SIZE))
         for params in circle_params:
             x, z, color = params
             draw_circle(x, z, color)
+
+            draw_axes()
+            draw_labels()
 
         pygame.display.flip()
 
