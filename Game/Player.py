@@ -72,12 +72,12 @@ class Joueur:
     def selectDirection(self, desc_str):
         directions = {
             '1': (-1, -1),  # Up-Left
-            '2': (-1, 0),  # Up
-            '3': (-1, 1),  # Up-Right
-            '4': (0, -1),  # Left
-            '5': (0, 1),  # Right
-            '6': (1, -1),  # Down-Left
-            '7': (1, 0),  # Down
+            '2': (0, -1),  # Up
+            '3': (1, -1),  # Up-Right
+            '4': (-1, 0),  # Left
+            '5': (1, 0),  # Right
+            '6': (-1, 1),  # Down-Left
+            '7': (0, 1),  # Down
             '8': (1, 1)  # Down-Right
         }
 

@@ -31,7 +31,7 @@ class Pion:
         print("new_x : ", new_x)
         print("new_y : ", new_y)
         if 0 <= new_x < 5 and 0 <= new_y < 5:
-            self.player.game.tableau_de_jeu[new_x][new_y] += 1
+            self.player.game.tableau_de_jeu[new_y][new_x] += 1
             print("debug build")
             self.player.game.printBoard()
         else:
