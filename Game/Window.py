@@ -21,7 +21,7 @@ def render_grid(array, circle_params):
 
     # Create PyGame screen
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    pygame.display.set_caption("5x5 Grid: White to Red Transition")
+    pygame.display.set_caption("Game")
     screen.fill(SCREEN_COLOR)
 
     # Font for text

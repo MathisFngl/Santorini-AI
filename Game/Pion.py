@@ -44,3 +44,5 @@ class Pion:
         new_pionID = self.pionID
         return Pion(new_player, new_x, new_y, new_pionID)
 
+    def getCoordinates(self):
+        return int(self.x), int(self.y)
