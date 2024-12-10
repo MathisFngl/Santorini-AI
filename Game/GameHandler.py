@@ -2,6 +2,7 @@ from .Player import Joueur, QLearningAgentPlayer, MinMaxPlayer
 from .Window import *
 import Game.MinMax as MinMax
 import copy
+from .Heuristique import evaluateGameState
 from .QLearningAgent import QLearningUCB
 
 class Game:
@@ -42,6 +43,14 @@ class Game:
                 print("Board State :")
                 self.printBoard()
                 print()
+
+                print("/// GAME STATE ///")
+                ai_pawns = [self.players[1].pion1, self.players[1].pion2]
+                player_pawns = [self.players[0].pion1, self.players[0].pion2]
+                score = evaluateGameState(self.tableau_de_jeu, ai_pawns, player_pawns)
+                print("Score : " + str(score))
+                print()
+
                 if player.name == "AI":
                     print("AI's turn :")
                     if self.ai_turn():
