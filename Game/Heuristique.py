@@ -100,7 +100,6 @@ def sumCompletedTowersAroundPawn(x, y, tableau, pawns):
                     is_occupied = any(pawn.x == nx and pawn.y == ny for pawn in pawns)
                     if not is_occupied:
                         total_count += 1
-                    total_count += 1
     return total_count
 
 
@@ -176,3 +175,81 @@ def countTotalConstructions(tableau):
         for cell in row:
             total_constructions += cell
     return total_constructions
+
+
+def evaluatePawn(pawn, tableau, allPawns, coeff):
+    """
+    Evaluate a single pawn and return its contribution to the score.
+
+    :param pawn: The pawn to evaluate.
+    :param tableau: The 5x5 game board containing tower values.
+    :param allPawns: List of the other pawns (AI and player).
+    :param weight: A multiplier (1 for AI, -1 for player).
+    :return: The score contribution of the pawn.
+    """
+    x, y = pawn.getCoordinates()
+    pawn_level = tableau[x][y]
+    score = 0
+
+    # Define weights for each attribute
+    weights = {
+        "winning_move_weight": 100,
+        "blocked_weight": 30,
+        "towers_weight": 10,
+        "height_weight": 2,
+        "center_weight": 10,
+        "distance_weight": 5,
+        "moves_weight": 1
+    }
+
+    # Can the pawn make a winning move
+    if winningPawn(pawn, tableau, allPawns):
+        score += coeff * weights["winning_move_weight"]
+
+    # Is the pawn blocked
+    if isPawnBlocked(pawn, tableau, allPawns):
+        score -= coeff * weights["blocked_weight"]
+
+    # Is the pawn next to towers
+    accessible_towers = sumCompletedTowersAroundPawn(x, y, tableau, allPawns)
+    if pawn_level > 0:
+        score += coeff * accessible_towers * weights["towers_weight"]
+    else:
+        score -= coeff * accessible_towers * weights["towers_weight"]
+
+    # Average height around the pawn
+    score += coeff * averageHeightAroundCoordinates(x, y, tableau) * weights["height_weight"]
+
+    # Is the pawn at the center of the board
+    if isCentralPosition(x, y):
+        score += coeff * weights["center_weight"]
+    else:
+        score -= coeff * distanceToCentralPosition(pawn) * weights["distance_weight"]
+
+    # Can the pawn move around
+    score += coeff * maxAvailableMoves(x, y, tableau, allPawns) * weights["moves_weight"]
+
+    return score
+
+
+
+def evaluateGameState(tableau, AIpawns, playerPawns):
+    """
+    Evaluate the value of the game state for the AI.
+    :param tableau: The 5x5 game board containing tower values.
+    :param AIpawns: List of AI's pawns.
+    :param playerPawns: List of player's pawns.
+    :return: A float representing the value of the game state.
+    """
+    score = 0
+
+    # Evaluate AI pawns
+    for pawn in AIpawns:
+        score += evaluatePawn(pawn, tableau, AIpawns + playerPawns, 1)
+
+    # Evaluate player pawns
+    for pawn in playerPawns:
+        score += evaluatePawn(pawn, tableau, AIpawns + playerPawns, -1)
+
+
+    return score

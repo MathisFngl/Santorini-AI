@@ -46,3 +46,6 @@ class Pion:
 
     def getCoordinates(self):
         return int(self.x), int(self.y)
+
+    def getHeight(self):
+        return self.player.game.tableau_de_jeu[self.x][self.y]
