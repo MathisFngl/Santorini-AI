@@ -1,7 +1,8 @@
-from .Player import Joueur, AIPlayer
+from .Player import Joueur, QLearningAgentPlayer, MinMaxPlayer
 from .Window import *
 import Game.MinMax as MinMax
 import copy
+from .QLearningAgent import QLearningUCB
 from .Heuristique import evaluateGameState
 
 class Game:
@@ -13,10 +14,28 @@ class Game:
 
     def play(self):
         win = False
-        self.choosePlayer()
-        while not win:
-            for player in self.players:
+        mode = self.chooseMode()
+        if mode == 1 or mode == 2:
+            self.choosePlayer()
+        elif mode == 3:
+            q_learning_agent = QLearningUCB(self)
+            self.players = [QLearningAgentPlayer(self), QLearningAgentPlayer(self)]
+            # Load the model if it exists
+            try:
+                q_learning_agent.load_model('q_learning_model.pkl')
+            except FileNotFoundError:
+                print("No existing model found. Starting fresh.")
+            q_learning_agent.train(3)  # Train the Q-learning agent
+            q_learning_agent.plot_training_progress()
+            q_learning_agent.save_model('q_learning_model.pkl')
+        elif mode == 4:
+            q_learning_agent = QLearningUCB(self)
+            self.players = [QLearningAgentPlayer(self), MinMaxPlayer(self)]
+            self.simulate_games(q_learning_agent, 5)  # Simulate 10 games
+            q_learning_agent.plot_training_progress()
 
+        while not win and mode != 3 and mode != 4:
+            for player in self.players:
                 player_pos_params = self.generatePlayerPos()
                 render_grid(self.tableau_de_jeu, player_pos_params)
 
@@ -38,6 +57,12 @@ class Game:
                         win = True
                         break
                     print("AI turn ended")
+                elif player.name == "Q-Learning":
+                    print("Q-Learning's turn :")
+                    if self.q_learning_turn(player):
+                        win = True
+                        break
+                    print("Q-Learning turn ended")
                 else:
                     print(player.name + "'s turn :")
                     testMovementHandler, pion = player.movementHandler()
@@ -52,6 +77,14 @@ class Game:
                     print()
                     player.buildingHandler(pion)
 
+    def chooseMode(self):
+        print("Choose the mode you want to play :")
+        print("1. Player vs Player")
+        print("2. Player vs AI")
+        print("3. Q-Learning Training")
+        print("4. Q-Learning vs Minimax")
+        mode = int(input())
+        return mode
 
 
     def choosePlayer(self):
@@ -60,7 +93,7 @@ class Game:
         print("Enter the name of the second player (or type 'AI' for the AI): ")
         player_2_name = input()
         if player_2_name == "AI":
-            player_2 = AIPlayer(self)
+            player_2 = MinMaxPlayer(self)
         else:
             player_2 = Joueur(self)
         self.players.append(player_2)
@@ -123,3 +156,72 @@ class Game:
                 return True
 
         return False
+
+    def reset(self):
+        self.__init__(skip_initialization=True)
+        self.players = [QLearningAgentPlayer(self), QLearningAgentPlayer(self)]
+        self.printBoard()
+        return self.get_state()
+
+    def step(self, action):
+        move_pion_id, dx, dy, build_pion_id, bx, by = action
+        move_pion = self.players[0].pion1 if move_pion_id == 1 else self.players[0].pion2
+        build_pion = self.players[0].pion1 if build_pion_id == 1 else self.players[0].pion2
+
+        # Move if valid
+        if self.players[0].isValidMovement(move_pion, dx, dy):
+            self.players[0].move(move_pion, dx, dy)
+        else:
+            return self.get_state(), -1, False # Invalid move, negative reward
+
+        # Check for win condition
+        for pion in [self.players[0].pion1, self.players[0].pion2]:
+            if self.tableau_de_jeu[pion.x][pion.y] == 3:
+                return self.get_state(), 10, True  # Win, positive reward
+
+        # Build if valid
+        if build_pion.isValidBuilding(bx, by):
+            build_pion.build(bx, by)
+        else:
+            return self.get_state(), -1, False  # Invalid build, negative reward
+
+        return self.get_state(), -1, False  # Continue game, no reward
+
+    def get_possible_actions(self, state):
+        actions = []
+        for move_pion_id in [1, 2]:
+            move_pion = self.players[0].pion1 if move_pion_id == 1 else self.players[0].pion2
+            for dx in [-1, 0, 1]:
+                for dy in [-1, 0, 1]:
+                    if (dx, dy) != (0, 0):
+                        if self.players[0].isValidMovement(move_pion, dx, dy):
+                            for bx in [-1, 0, 1]:
+                                for by in [-1, 0, 1]:
+                                    if (bx, by) != (0, 0):
+                                        if move_pion.isValidBuilding(bx + dx, by + dy):
+                                            actions.append((move_pion.pionID, dx, dy, move_pion.pionID, bx, by))
+        return actions
+
+    def get_state(self):
+        return (tuple(tuple(row) for row in self.tableau_de_jeu),
+                tuple((pion.x, pion.y) for player in self.players for pion in [player.pion1, player.pion2]))
+
+    def q_learning_turn(self, q_learning_agent):
+        state = MinMax.GameState(self, current_player=0)
+        action = q_learning_agent.select_action(state)
+        if action is None:
+            return False
+        next_state, reward, done = self.step(action)
+        q_learning_agent.update_q_value(state, action, reward, MinMax.GameState(self, 0))
+        q_learning_agent.update_visit_counts(state, action)
+        return done
+
+    def simulate_games(self, q_learning_agent, num_games):
+        for _ in range(num_games):
+            self.reset()
+            done = False
+            while not done:
+                if self.players[0].name == "Q-Learning":
+                    done = self.q_learning_turn(q_learning_agent)
+                else:
+                    done = self.ai_turn()

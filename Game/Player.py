@@ -30,7 +30,8 @@ class Joueur:
                 if (not self.game.isOccupied(x, y)) and not (self.pion1.x == x and self.pion1.y == y):
                     valid_position = True
                 else:
-                    print("This Square is already occupied")
+                    if self.name != "AI" or self.name != "QLearningAgent":
+                        print("This Square is already occupied")
             else:
                 print("Location out of bounds")
         return Pion(self, x, y, pionId)
@@ -39,23 +40,26 @@ class Joueur:
         new_x = pion.x + x
         new_y = pion.y + y
         if new_x < 0 or new_x >= 5 or new_y < 0 or new_y >= 5:
-            if self.name != "AI":
+            if self.name != "AI" or self.name != "QLearningAgent":
                 print("Cannot Move Here: Out of Bounds")
             return False
         if self.game.tableau_de_jeu[new_x][new_y] == 4:
-            if self.name != "AI":
+            if self.name != "AI" or self.name != "QLearningAgent":
                 print("Cannot Move Here: Cannot be on a Dome")
             return False
         for player in self.game.players:
             if (player.pion1.x == new_x and player.pion1.y == new_y) or (
                     player.pion2.x == new_x and player.pion2.y == new_y):
-                if self.name != "AI":
+                if self.name != "AI" or self.name != "QLearningAgent":
                     print("Cannot Move Here: A builder is on this square.")
                 return False
         return True
 
     def move(self, pion, x, y):
+        print("Moving for ", self.name)
         if self.isValidMovement(pion, x, y):
+            print("x : ", x)
+            print("y : ", y)
             pion.x += x
             pion.y += y
 
@@ -125,9 +129,27 @@ class Joueur:
         new_player.pion2 = self.pion2.pionCopy()
         return new_player
 
-class AIPlayer(Joueur):
+class MinMaxPlayer(Joueur):
     def nameDefinition(self):
         return "AI"
+
+    def defineBothPions(self):
+        self.pion1 = self.randomPionDefinition(1)
+        self.pion2 = self.randomPionDefinition(2)
+
+    def randomPionDefinition(self, pionId):
+        valid_position = False
+        while not valid_position:
+            x = random.randint(0, 4)
+            y = random.randint(0, 4)
+            if not self.game.isOccupied(x, y):
+                if pionId == 1 or (self.pion1.x != x or self.pion1.y != y):
+                    valid_position = True
+        return Pion(self, x, y, pionId)
+
+class QLearningAgentPlayer(Joueur):
+    def nameDefinition(self):
+        return "QLearningAgent"
 
     def defineBothPions(self):
         self.pion1 = self.randomPionDefinition(1)
