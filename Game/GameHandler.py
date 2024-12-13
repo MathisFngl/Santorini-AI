@@ -47,7 +47,7 @@ class Game:
                 print("/// GAME STATE ///")
                 ai_pawns = [self.players[1].pion1, self.players[1].pion2]
                 player_pawns = [self.players[0].pion1, self.players[0].pion2]
-                score = evaluateGameState(self.tableau_de_jeu, ai_pawns, player_pawns)
+                score = evaluateGameState(self.tableau_de_jeu, ai_pawns, player_pawns, 1)
                 print("Score : " + str(score))
                 print()
 
