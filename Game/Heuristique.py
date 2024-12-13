@@ -163,6 +163,72 @@ def winningPawn(p, tableau, pawns):
                     return True
     return False
 
+def canWin(p, tableau, pawns, current_player):
+    """
+    Check if a pawn can win, considering the opponent's pawns
+    :param p: The current pawn (object with coordinates x, y).
+    :param tableau: The 5x5 game board containing tower values.
+    :param pawns: List of pawns (objects with x, y) representing other pawns.
+    :param currentPlayer: The index of the current player (0 for player, 1 for AI).
+    :return: True if the pawn can win by moving, False otherwise.
+    """
+
+    opponent_pawns = [pawn for pawn in pawns if pawn.player != current_player]
+
+    if not winningPawn(p, tableau, pawns):
+        return False
+
+    if current_player == 0:
+        return True
+
+    winning_positions = []
+    for dx in range(-1, 2):
+        for dy in range(-1, 2):
+            nx, ny = p.x + dx, p.y + dy
+            if (0 <= nx < 5 and 0 <= ny < 5) and tableau[nx][ny] == 3:
+                winning_positions.append((nx, ny))
+
+    if not winning_positions:
+        return False
+
+    if len(winning_positions) > 1:
+        for wx, wy in winning_positions:
+            for opp in opponent_pawns:
+                if abs(opp.x - wx) <= 1 and abs(opp.y - wy) <= 1 and tableau[opp.x][opp.y] == 2:
+                    return False
+        return True
+
+    wx, wy = winning_positions[0]
+    for opp in opponent_pawns:
+        if abs(opp.x - wx) <= 1 and abs(opp.y - wy) <= 1:
+            if tableau[opp.x][opp.y] == 2:
+                return False
+
+    for bdx in range(-1, 2):
+        for bdy in range(-1, 2):
+            bx, by = wx + bdx, wy + bdy
+            if 0 <= bx < 5 and 0 <= by < 5:
+                if tableau[bx][by] >= 3:
+                    continue
+                if any(pawn.x == bx and pawn.y == by for pawn in pawns):
+                    continue
+
+                for pdx in range(-1, 2):
+                    for pdy in range(-1, 2):
+                        px, py = bx + pdx, by + bdy
+                        if 0 <= px < 5 and 0 <= py < 5:
+                            for opp in opponent_pawns:
+                                if opp.x == px and opp.y == py:
+                                    if tableau[bx][by] == 2:
+                                        if tableau[opp.x][opp.y] >= 1:
+                                            return False
+                                    return False
+
+    return True
+
+
+
+
 def countTotalConstructions(tableau):
     """
     Calculate the total number of constructions on the board.
@@ -177,14 +243,15 @@ def countTotalConstructions(tableau):
     return total_constructions
 
 
-def evaluatePawn(pawn, tableau, allPawns, coeff):
+def evaluatePawn(pawn, tableau, allPawns, coeff, current_player):
     """
     Evaluate a single pawn and return its contribution to the score.
 
     :param pawn: The pawn to evaluate.
     :param tableau: The 5x5 game board containing tower values.
     :param allPawns: List of the other pawns (AI and player).
-    :param weight: A multiplier (1 for AI, -1 for player).
+    :param coeff: A multiplier (1 for AI, -1 for player).
+    :param currentPlayer: The index of the current player (0 for player, 1 for AI).
     :return: The score contribution of the pawn.
     """
     x, y = pawn.getCoordinates()
@@ -203,7 +270,7 @@ def evaluatePawn(pawn, tableau, allPawns, coeff):
     }
 
     # Can the pawn make a winning move
-    if winningPawn(pawn, tableau, allPawns):
+    if canWin(pawn, tableau, allPawns, current_player):
         score += coeff * weights["winning_move_weight"]
 
     # Is the pawn blocked
@@ -233,23 +300,24 @@ def evaluatePawn(pawn, tableau, allPawns, coeff):
 
 
 
-def evaluateGameState(tableau, AIpawns, playerPawns):
+def evaluateGameState(tableau, AIpawns, playerPawns, current_player):
     """
     Evaluate the value of the game state for the AI.
     :param tableau: The 5x5 game board containing tower values.
     :param AIpawns: List of AI's pawns.
     :param playerPawns: List of player's pawns.
+    :param currentPlayer: The index of the current player (0 for player, 1 for AI).
     :return: A float representing the value of the game state.
     """
     score = 0
 
     # Evaluate AI pawns
     for pawn in AIpawns:
-        score += evaluatePawn(pawn, tableau, AIpawns + playerPawns, 1)
+        score += evaluatePawn(pawn, tableau, AIpawns + playerPawns, 1, current_player)
 
     # Evaluate player pawns
     for pawn in playerPawns:
-        score += evaluatePawn(pawn, tableau, AIpawns + playerPawns, -1)
+        score += evaluatePawn(pawn, tableau, AIpawns + playerPawns, -1, current_player)
 
 
     return score
