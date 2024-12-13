@@ -3,6 +3,7 @@ from .Window import *
 import Game.MinMax as MinMax
 import copy
 from .QLearningAgent import QLearningUCB
+from .Heuristique import evaluateGameState
 
 class Game:
     def __init__(self, skip_initialization=False):
@@ -42,6 +43,14 @@ class Game:
                 print("Board State :")
                 self.printBoard()
                 print()
+
+                print("/// GAME STATE ///")
+                ai_pawns = [self.players[1].pion1, self.players[1].pion2]
+                player_pawns = [self.players[0].pion1, self.players[0].pion2]
+                score = evaluateGameState(self.tableau_de_jeu, ai_pawns, player_pawns, 1)
+                print("Score : " + str(score))
+                print()
+
                 if player.name == "AI":
                     print("AI's turn :")
                     if self.ai_turn():
@@ -59,6 +68,8 @@ class Game:
                     testMovementHandler, pion = player.movementHandler()
                     if testMovementHandler:
                         win = True
+                        player_pos_params = self.generatePlayerPos()
+                        render_grid(self.tableau_de_jeu, player_pos_params)
                         break
                     print()
                     print("Board State :")
@@ -140,6 +151,8 @@ class Game:
         for pion in [self.players[1].pion1, self.players[1].pion2]:
             if self.tableau_de_jeu[pion.x][pion.y] == 3:
                 print("AI won!")
+                player_pos_params = self.generatePlayerPos()
+                render_grid(self.tableau_de_jeu, player_pos_params)
                 return True
 
         return False
