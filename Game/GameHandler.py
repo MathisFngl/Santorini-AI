@@ -2,7 +2,7 @@ from .Player import Joueur, QLearningAgentPlayer, MinMaxPlayer
 from .Window import *
 import Game.MinMax as MinMax
 import copy
-from .Heuristique import evaluateGameState
+from .Heuristique import evaluateGameState, isPawnBlocked
 from .QLearningAgent import QLearningUCB
 from .Heuristique import evaluateGameState
 
@@ -26,13 +26,13 @@ class Game:
                 q_learning_agent.load_model('q_learning_model.pkl')
             except FileNotFoundError:
                 print("No existing model found. Starting fresh.")
-            q_learning_agent.train(3)  # Train the Q-learning agent
+            q_learning_agent.train(1000)  # Train the Q-learning agent
             q_learning_agent.plot_training_progress()
             q_learning_agent.save_model('q_learning_model.pkl')
         elif mode == 4:
             q_learning_agent = QLearningUCB(self)
             self.players = [QLearningAgentPlayer(self), MinMaxPlayer(self)]
-            self.simulate_games(q_learning_agent, 5)  # Simulate 10 games
+            self.simulate_games(q_learning_agent, 100)  # Simulate 10 games
             q_learning_agent.plot_training_progress()
 
         while not win and mode != 3 and mode != 4:
@@ -54,7 +54,7 @@ class Game:
 
                 if player.name == "AI":
                     print("AI's turn :")
-                    if self.ai_turn():
+                    if self.ai_turn(1):
                         win = True
                         break
                     print("AI turn ended")
@@ -125,7 +125,7 @@ class Game:
     def gameCopy(self):
         return copy.deepcopy(self)
 
-    def ai_turn(self):
+    def ai_turn(self, mode):
         state = MinMax.GameState(self, current_player=1)
 
         best_eval, best_moves = MinMax.minimax(state, 3, float('-inf'), float('inf'), True)
@@ -153,15 +153,16 @@ class Game:
             if self.tableau_de_jeu[pion.x][pion.y] == 3:
                 print("AI won!")
                 player_pos_params = self.generatePlayerPos()
-                render_grid(self.tableau_de_jeu, player_pos_params)
+                if mode == 1 or mode == 2:
+                    render_grid(self.tableau_de_jeu, player_pos_params)
                 return True
 
         return False
 
     def reset(self):
-        self.__init__(skip_initialization=True)
-        self.players = [QLearningAgentPlayer(self), QLearningAgentPlayer(self)]
-        self.printBoard()
+        self.tableau_de_jeu = [[0 for _ in range(5)] for _ in range(5)]
+        self.players = [QLearningAgentPlayer(self),
+                        QLearningAgentPlayer(self)]
         return self.get_state()
 
     def step(self, action):
@@ -173,7 +174,7 @@ class Game:
         if self.players[0].isValidMovement(move_pion, dx, dy):
             self.players[0].move(move_pion, dx, dy)
         else:
-            return self.get_state(), -1, False # Invalid move, negative reward
+            return self.get_state(), -1, False  # Invalid move, negative reward
 
         # Check for win condition
         for pion in [self.players[0].pion1, self.players[0].pion2]:
@@ -186,8 +187,24 @@ class Game:
         else:
             return self.get_state(), -1, False  # Invalid build, negative reward
 
-        return self.get_state(), -1, False  # Continue game, no reward
+        # Additional rewards and penalties
+        reward = -0.1  # Small penalty for each move to encourage faster wins
 
+        # Reward for moving to a higher level
+        if self.tableau_de_jeu[move_pion.x][move_pion.y] > self.tableau_de_jeu[move_pion.x - dx][move_pion.y - dy]:
+            reward += 1
+
+        # Penalty for moving to a lower level
+        if self.tableau_de_jeu[move_pion.x][move_pion.y] < self.tableau_de_jeu[move_pion.x - dx][move_pion.y - dy]:
+            reward -= 1
+
+        # Reward for blocking opponent's move
+        opponent = self.players[1]
+        for pion in [opponent.pion1, opponent.pion2]:
+            if isPawnBlocked(pion,self.tableau_de_jeu, [self.players[0].pion1, self.players[0].pion2]):
+                reward += 0.5
+
+        return self.get_state(), reward, False  # Continue game
     def get_possible_actions(self, state):
         actions = []
         for move_pion_id in [1, 2]:
@@ -220,9 +237,10 @@ class Game:
     def simulate_games(self, q_learning_agent, num_games):
         for _ in range(num_games):
             self.reset()
+            print("Game number: ", _)
             done = False
             while not done:
                 if self.players[0].name == "Q-Learning":
                     done = self.q_learning_turn(q_learning_agent)
                 else:
-                    done = self.ai_turn()
+                    done = self.ai_turn(4)
