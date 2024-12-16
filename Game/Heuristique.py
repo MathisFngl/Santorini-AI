@@ -160,6 +160,7 @@ def winningPawn(p, tableau, pawns):
                 if any(pawn.x == nx and pawn.y == ny for pawn in pawns):
                     continue
                 if tableau[nx][ny] == 3:
+                    print("A winning move can be made")
                     return True
     return False
 

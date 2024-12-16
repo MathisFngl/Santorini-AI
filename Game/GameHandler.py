@@ -128,7 +128,6 @@ class Game:
         state = MinMax.GameState(self, current_player=1)
 
         best_eval, best_moves = MinMax.minimax(state, 3, float('-inf'), float('inf'), True)
-
         moveToApply = best_moves[0]
         move_pion_id, dx, dy, build_pion_id, bx, by = moveToApply
         move_pion = self.players[1].pion1 if move_pion_id == 1 else self.players[1].pion2

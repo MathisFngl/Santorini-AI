@@ -62,6 +62,8 @@ class Joueur:
             print("y : ", y)
             pion.x += x
             pion.y += y
+            return True
+        return False
 
     def chooseBuilder(self, ask_str):
         while True:
@@ -103,10 +105,15 @@ class Joueur:
             return True
 
     def movementHandler(self):
+        did_do_possible_move = False
         pion = self.chooseBuilder("move")
         print(f"Current Pion Position: ({pion.x},{pion.y})")
-        movement = self.selectDirection("move")
-        self.move(pion, movement[0], movement[1])
+        while not did_do_possible_move:
+            movement = self.selectDirection("move")
+            if self.move(pion, movement[0], movement[1]) :
+                did_do_possible_move = True
+            else :
+                print("Invalid move")
         print(f"New Pion Position: ({pion.x},{pion.y})")
         if self.didWin(pion):
             print("You won!")
