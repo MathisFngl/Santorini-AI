@@ -4,6 +4,7 @@ import Game.MinMax as MinMax
 import copy
 from .Heuristique import evaluateGameState
 from .QLearningAgent import QLearningUCB
+from .Heuristique import evaluateGameState
 
 class Game:
     def __init__(self, skip_initialization=False):
