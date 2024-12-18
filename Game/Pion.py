@@ -31,6 +31,8 @@ class Pion:
 
     def build(self, x_build, y_build):
         print("Building for ", self.player.name)
+        print("building x : ", x_build)
+        print("building y : ", y_build)
         new_x = self.x + x_build
         new_y = self.y + y_build
         print("new_x : ", new_x)
@@ -39,7 +41,7 @@ class Pion:
         if self.player.game.tableau_de_jeu[new_x][new_y] + 1 > 4:
             print("\n\n\nJOSHUA \n\n\n.")
         if 0 <= new_x < 5 and 0 <= new_y < 5:
-            self.player.game.tableau_de_jeu[new_x][new_y] += 1
+            self.player.game.tableau_de_jeu[new_y][new_x] += 1
             print("debug build")
             self.player.game.printBoard()
         else:
