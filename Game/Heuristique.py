@@ -164,7 +164,7 @@ def winningPawn(p, tableau, pawns):
                     return True
     return False
 
-def canWin(p, tableau, pawns, current_player):
+def canWin(p, tableau, ai_pawns, player_pawns, current_player):
     """
     Check if a pawn can win, considering the opponent's pawns
     :param p: The current pawn (object with coordinates x, y).
@@ -173,13 +173,22 @@ def canWin(p, tableau, pawns, current_player):
     :param current_player: The index of the current player (0 for player, 1 for AI).
     :return: True if the pawn can win by moving, False otherwise.
     """
+    pawns = ai_pawns + player_pawns
 
     opponent_pawns = [pawn for pawn in pawns if pawn.player != current_player]
 
     if not winningPawn(p, tableau, pawns):
         return False
 
-    if current_player == 0:
+    current_pawn = 0
+    for pawn in ai_pawns:
+        if pawn.getCoordinates == p.getCoordinates:
+            current_pawn = 1
+
+    if current_pawn == 0:
+        print("test canWin")
+
+    if current_player == current_pawn:
         return True
 
     winning_positions = []
@@ -244,7 +253,7 @@ def countTotalConstructions(tableau):
     return total_constructions
 
 
-def evaluatePawn(pawn, tableau, all_pawns, coeff, current_player):
+def evaluatePawn(pawn, tableau, ai_pawns, player_pawns, coeff, current_player):
     """
     Evaluate a single pawn and return its contribution to the score.
 
@@ -258,12 +267,14 @@ def evaluatePawn(pawn, tableau, all_pawns, coeff, current_player):
     x, y = pawn.getCoordinates()
     pawn_level = tableau[x][y]
     score = 0
+    all_pawns = ai_pawns + player_pawns
 
     # Define weights for each attribute
     weights = {
-        "winning_move_weight": 100,
+        "winning_move_weight": 1000,
         "blocked_weight": 30,
         "towers_weight": 10,
+        "average_height_weight": 2,
         "height_weight": 2,
         "center_weight": 10,
         "distance_weight": 5,
@@ -271,7 +282,7 @@ def evaluatePawn(pawn, tableau, all_pawns, coeff, current_player):
     }
 
     # Can the pawn make a winning move
-    if canWin(pawn, tableau, all_pawns, current_player):
+    if canWin(pawn, tableau, ai_pawns, player_pawns, current_player):
         score += coeff * weights["winning_move_weight"]
 
     # Is the pawn blocked
@@ -286,6 +297,9 @@ def evaluatePawn(pawn, tableau, all_pawns, coeff, current_player):
         score -= coeff * accessible_towers * weights["towers_weight"]
 
     # Average height around the pawn
+    score += coeff * averageHeightAroundCoordinates(x, y, tableau) * weights["average_height_weight"]
+
+    # Height of the pawn
     score += coeff * averageHeightAroundCoordinates(x, y, tableau) * weights["height_weight"]
 
     # Is the pawn at the center of the board
@@ -314,11 +328,17 @@ def evaluateGameState(tableau, ai_pawns, player_pawns, current_player):
 
     # Evaluate AI pawns
     for pawn in ai_pawns:
-        score += evaluatePawn(pawn, tableau, ai_pawns + player_pawns, 1, current_player)
+        score += evaluatePawn(pawn, tableau, ai_pawns, player_pawns, 1, current_player)
 
     # Evaluate player pawns
     for pawn in player_pawns:
-        score += evaluatePawn(pawn, tableau, ai_pawns + player_pawns, -1, current_player)
+        score += evaluatePawn(pawn, tableau, ai_pawns, player_pawns, -1, current_player)
+        flag = 0
+        for pawnAI in ai_pawns:
+            if euclidean_distance(pawn, pawnAI) < 2:
+                flag = 1
+        if flag == 0:
+            score -= 20
 
 
     return score

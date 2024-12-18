@@ -129,7 +129,13 @@ class Game:
         state = MinMax.GameState(self, current_player=1)
 
         best_eval, best_moves = MinMax.minimax(state, 3, float('-inf'), float('inf'), True)
-        moveToApply = best_moves[0]
+
+        if not best_moves:  # Vérifie si best_moves est vide
+            print("AI has no valid moves.")
+            return False
+        else:
+            moveToApply = best_moves[0]
+
         move_pion_id, dx, dy, build_pion_id, bx, by = moveToApply
         move_pion = self.players[1].pion1 if move_pion_id == 1 else self.players[1].pion2
         build_pion = self.players[1].pion1 if build_pion_id == 1 else self.players[1].pion2
@@ -147,6 +153,9 @@ class Game:
         else:
             print("Invalid building")
             return False
+
+        print("/// SCORE FINAL ///\n")
+        score = state.evaluate()
 
         for pion in [self.players[1].pion1, self.players[1].pion2]:
             if self.tableau_de_jeu[pion.y][pion.x] == 3:

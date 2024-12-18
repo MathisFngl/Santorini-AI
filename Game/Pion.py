@@ -60,3 +60,6 @@ class Pion:
 
     def getHeight(self):
         return self.player.game.tableau_de_jeu[self.x][self.y]
+
+    def getPlayer(self):
+        return self.player
