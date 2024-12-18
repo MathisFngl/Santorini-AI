@@ -47,6 +47,11 @@ class Joueur:
             if self.name != "AI" or self.name != "QLearningAgent":
                 print("Cannot Move Here: Cannot be on a Dome")
             return False
+        print("\n\n"+ str(self.game.tableau_de_jeu[new_y][new_x] - self.game.tableau_de_jeu[pion.y][pion.x]))
+        if self.game.tableau_de_jeu[new_y][new_x] - self.game.tableau_de_jeu[pion.y][pion.x] > 1:
+            if self.name != "AI" or self.name != "QLearningAgent":
+                print("Cannot Move Here: Cannot move up more than 1 level")
+            return False
         for player in self.game.players:
             if (player.pion1.x == new_x and player.pion1.y == new_y) or (
                     player.pion2.x == new_x and player.pion2.y == new_y):
