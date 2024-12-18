@@ -150,7 +150,7 @@ class Game:
             return False
 
         for pion in [self.players[1].pion1, self.players[1].pion2]:
-            if self.tableau_de_jeu[pion.x][pion.y] == 3:
+            if self.tableau_de_jeu[pion.y][pion.x] == 3:
                 print("AI won!")
                 player_pos_params = self.generatePlayerPos()
                 if mode == 1 or mode == 2:
