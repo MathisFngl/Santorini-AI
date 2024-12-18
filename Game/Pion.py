@@ -31,6 +31,8 @@ class Pion:
 
     def build(self, x_build, y_build):
         print("Building for ", self.player.name)
+        print("building x : ", x_build)
+        print("building y : ", y_build)
         new_x = self.x + x_build
         new_y = self.y + y_build
         print("new_x : ", new_x)
