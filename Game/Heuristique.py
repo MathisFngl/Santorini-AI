@@ -275,7 +275,7 @@ def evaluatePawn(pawn, tableau, ai_pawns, player_pawns, coeff, current_player):
         "blocked_weight": 30,
         "towers_weight": 10,
         "average_height_weight": 2,
-        "height_weight": 20,
+        "height_weight": 25,
         "center_weight": 10,
         "distance_weight": 5,
         "moves_weight": 1
@@ -283,8 +283,10 @@ def evaluatePawn(pawn, tableau, ai_pawns, player_pawns, coeff, current_player):
 
     # Can the pawn make a winning move
     if canWin(pawn, tableau, ai_pawns, player_pawns, current_player):
-    #if winningPawn(pawn, tableau, all_pawns):
-        score += coeff * weights["winning_move_weight"]
+        tmp_coeff = 1
+        if current_player == 0:
+            tmp_coeff = 100
+        score += coeff * weights["winning_move_weight"] * tmp_coeff
 
     # Is the pawn blocked
     if isPawnBlocked(pawn, tableau, all_pawns):
@@ -326,23 +328,35 @@ def evaluateGameState(tableau, ai_pawns, player_pawns, current_player):
     :return: A float representing the value of the game state.
     """
     score = 0
+    win_flag_AI = 0
+    win_flag_player = 0
 
     # Evaluate AI pawns
     for pawn in ai_pawns:
         x, y = pawn.getCoordinates()
         if tableau[y][x] == 3:
-            return 100000
-        score += evaluatePawn(pawn, tableau, ai_pawns, player_pawns, 1, current_player)
+            return 10000000
+        score_ai_pawn = evaluatePawn(pawn, tableau, ai_pawns, player_pawns, 1, current_player)
+        if winningPawn(pawn, tableau, ai_pawns+player_pawns):
+            win_flag_AI = 1
+        score += score_ai_pawn
 
     # Evaluate player pawns
     for pawn in player_pawns:
-        score += evaluatePawn(pawn, tableau, ai_pawns, player_pawns, -1, current_player)
+        score_player_pawn = evaluatePawn(pawn, tableau, ai_pawns, player_pawns, -1, current_player)
+        if winningPawn(pawn, tableau, ai_pawns+player_pawns):
+            win_flag_player = 1
+        score += score_player_pawn
+
         flag = 0
         for pawnAI in ai_pawns:
             if euclidean_distance(pawn, pawnAI) < 2:
                 flag = 1
         if flag == 0:
             score -= 20
+
+    if win_flag_AI and win_flag_player:
+            score -= 4000
 
 
     return score
