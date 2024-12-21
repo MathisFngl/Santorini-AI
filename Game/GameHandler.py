@@ -186,7 +186,7 @@ class Game:
 
         # Check for win condition
         for pion in [self.players[0].pion1, self.players[0].pion2]:
-            if self.tableau_de_jeu[pion.x][pion.y] == 3:
+            if self.tableau_de_jeu[pion.y][pion.x] == 3:
                 return self.get_state(), 10, True  # Win, positive reward
 
         # Build if valid
@@ -199,11 +199,11 @@ class Game:
         reward = -0.1  # Small penalty for each move to encourage faster wins
 
         # Reward for moving to a higher level
-        if self.tableau_de_jeu[move_pion.x][move_pion.y] > self.tableau_de_jeu[move_pion.x - dx][move_pion.y - dy]:
+        if self.tableau_de_jeu[move_pion.y][move_pion.x] > self.tableau_de_jeu[move_pion.y - dy][move_pion.x - dx]:
             reward += 1
 
         # Penalty for moving to a lower level
-        if self.tableau_de_jeu[move_pion.x][move_pion.y] < self.tableau_de_jeu[move_pion.x - dx][move_pion.y - dy]:
+        if self.tableau_de_jeu[move_pion.y][move_pion.x] < self.tableau_de_jeu[move_pion.y - dy][move_pion.x - dx]:
             reward -= 1
 
         # Reward for blocking opponent's move

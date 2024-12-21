@@ -43,7 +43,7 @@ class Joueur:
             if self.name != "AI" or self.name != "QLearningAgent":
                 print("Cannot Move Here: Out of Bounds")
             return False
-        if self.game.tableau_de_jeu[new_x][new_y] == 4:
+        if self.game.tableau_de_jeu[new_y][new_x] == 4:
             if self.name != "AI" or self.name != "QLearningAgent":
                 print("Cannot Move Here: Cannot be on a Dome")
             return False
@@ -106,7 +106,7 @@ class Joueur:
                 print("Invalid choice. Please choose a number between 1 and 8.")
 
     def didWin(self, pion):
-        if self.game.tableau_de_jeu[pion.x][pion.y] == 3:
+        if self.game.tableau_de_jeu[pion.y][pion.x] == 3:
             return True
 
     def movementHandler(self):

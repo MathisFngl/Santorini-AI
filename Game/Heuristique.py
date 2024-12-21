@@ -39,7 +39,7 @@ def maxAvailableMoves(x, y, tableau, pawns):
                 continue
             nx, ny = x + x1, y + y1
             if 0 <= nx < 5 and 0 <= ny < 5:
-                if tableau[nx][ny] != 4 and not any(pawn.x == nx and pawn.y == ny for pawn in pawns):
+                if tableau[ny][nx] != 4 and not any(pawn.x == nx and pawn.y == ny for pawn in pawns):
                     moves += 1
     return moves
 
@@ -96,7 +96,7 @@ def sumCompletedTowersAroundPawn(x, y, tableau, pawns):
 
             nx, ny = x + dx, y + dy
             if 0 <= nx < 5 and 0 <= ny < 5:
-                if tableau[nx][ny] in (2, 3):
+                if tableau[ny][nx] in (2, 3):
                     is_occupied = any(pawn.x == nx and pawn.y == ny for pawn in pawns)
                     if not is_occupied:
                         total_count += 1
@@ -120,7 +120,7 @@ def isPawnBlocked(p, tableau, pawns):
 
             nx, ny = x + dx, y + dy
             if 0 <= nx < 5 and 0 <= ny < 5:
-                if tableau[nx][ny] == 4 or any(pawn.x == nx and pawn.y == ny for pawn in pawns):
+                if tableau[ny][nx] == 4 or any(pawn.x == nx and pawn.y == ny for pawn in pawns):
                     continue  # The cell is blocked, cycle the loop
                 return False  # If at least one of the 8 surrounding cells is free, the pawn is NOT blocked
     return True
@@ -147,7 +147,7 @@ def winningPawn(p, tableau, pawns):
     :return: True if the pawn can win by moving, False otherwise.
     """
     x, y = p.getCoordinates()
-    if tableau[x][y] != 2:
+    if tableau[y][x] != 2:
         return False
 
     for dx in range(-1, 2):
@@ -159,7 +159,7 @@ def winningPawn(p, tableau, pawns):
             if 0 <= nx < 5 and 0 <= ny < 5:
                 if any(pawn.x == nx and pawn.y == ny for pawn in pawns):
                     continue
-                if tableau[nx][ny] == 3:
+                if tableau[ny][nx] == 3:
                     print("A winning move can be made")
                     return True
     return False
@@ -195,7 +195,7 @@ def canWin(p, tableau, ai_pawns, player_pawns, current_player):
     for dx in range(-1, 2):
         for dy in range(-1, 2):
             nx, ny = p.x + dx, p.y + dy
-            if (0 <= nx < 5 and 0 <= ny < 5) and tableau[nx][ny] == 3:
+            if (0 <= nx < 5 and 0 <= ny < 5) and tableau[ny][nx] == 3:
                 winning_positions.append((nx, ny))
 
     if not winning_positions:
@@ -204,21 +204,21 @@ def canWin(p, tableau, ai_pawns, player_pawns, current_player):
     if len(winning_positions) > 1:
         for wx, wy in winning_positions:
             for opp in opponent_pawns:
-                if abs(opp.x - wx) <= 1 and abs(opp.y - wy) <= 1 and tableau[opp.x][opp.y] == 2:
+                if abs(opp.x - wx) <= 1 and abs(opp.y - wy) <= 1 and tableau[opp.y][opp.x] == 2:
                     return False
         return True
 
     wx, wy = winning_positions[0]
     for opp in opponent_pawns:
         if abs(opp.x - wx) <= 1 and abs(opp.y - wy) <= 1:
-            if tableau[opp.x][opp.y] == 2:
+            if tableau[opp.y][opp.x] == 2:
                 return False
 
     for bdx in range(-1, 2):
         for bdy in range(-1, 2):
             bx, by = wx + bdx, wy + bdy
             if 0 <= bx < 5 and 0 <= by < 5:
-                if tableau[bx][by] >= 3:
+                if tableau[by][bx] >= 3:
                     continue
                 if any(pawn.x == bx and pawn.y == by for pawn in pawns):
                     continue
@@ -229,8 +229,8 @@ def canWin(p, tableau, ai_pawns, player_pawns, current_player):
                         if 0 <= px < 5 and 0 <= py < 5:
                             for opp in opponent_pawns:
                                 if opp.x == px and opp.y == py:
-                                    if tableau[bx][by] == 2:
-                                        if tableau[opp.x][opp.y] >= 1:
+                                    if tableau[by][bx] == 2:
+                                        if tableau[opp.y][opp.x] >= 1:
                                             return False
                                     return False
 
@@ -265,17 +265,17 @@ def evaluatePawn(pawn, tableau, ai_pawns, player_pawns, coeff, current_player):
     :return: The score contribution of the pawn.
     """
     x, y = pawn.getCoordinates()
-    pawn_level = tableau[x][y]
+    pawn_level = tableau[y][x]
     score = 0
     all_pawns = ai_pawns + player_pawns
 
     # Define weights for each attribute
     weights = {
-        "winning_move_weight": 1000,
+        "winning_move_weight": 10000,
         "blocked_weight": 30,
         "towers_weight": 10,
         "average_height_weight": 2,
-        "height_weight": 2,
+        "height_weight": 20,
         "center_weight": 10,
         "distance_weight": 5,
         "moves_weight": 1
@@ -283,6 +283,7 @@ def evaluatePawn(pawn, tableau, ai_pawns, player_pawns, coeff, current_player):
 
     # Can the pawn make a winning move
     if canWin(pawn, tableau, ai_pawns, player_pawns, current_player):
+    #if winningPawn(pawn, tableau, all_pawns):
         score += coeff * weights["winning_move_weight"]
 
     # Is the pawn blocked
@@ -300,7 +301,7 @@ def evaluatePawn(pawn, tableau, ai_pawns, player_pawns, coeff, current_player):
     score += coeff * averageHeightAroundCoordinates(x, y, tableau) * weights["average_height_weight"]
 
     # Height of the pawn
-    score += coeff * averageHeightAroundCoordinates(x, y, tableau) * weights["height_weight"]
+    score += coeff * pawn_level * weights["height_weight"]
 
     # Is the pawn at the center of the board
     if isCentralPosition(x, y):
@@ -328,6 +329,9 @@ def evaluateGameState(tableau, ai_pawns, player_pawns, current_player):
 
     # Evaluate AI pawns
     for pawn in ai_pawns:
+        x, y = pawn.getCoordinates()
+        if tableau[y][x] == 3:
+            return 100000
         score += evaluatePawn(pawn, tableau, ai_pawns, player_pawns, 1, current_player)
 
     # Evaluate player pawns
