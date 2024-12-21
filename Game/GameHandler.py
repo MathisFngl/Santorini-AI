@@ -129,7 +129,13 @@ class Game:
         state = MinMax.GameState(self, current_player=1)
 
         best_eval, best_moves = MinMax.minimax(state, 3, float('-inf'), float('inf'), True)
-        moveToApply = best_moves[0]
+
+        if not best_moves:  # Vérifie si best_moves est vide
+            print("AI has no valid moves.")
+            return False
+        else:
+            moveToApply = best_moves[0]
+
         move_pion_id, dx, dy, build_pion_id, bx, by = moveToApply
         move_pion = self.players[1].pion1 if move_pion_id == 1 else self.players[1].pion2
         build_pion = self.players[1].pion1 if build_pion_id == 1 else self.players[1].pion2
@@ -147,6 +153,9 @@ class Game:
         else:
             print("Invalid building")
             return False
+
+        print("/// SCORE FINAL ///\n")
+        score = state.evaluate()
 
         for pion in [self.players[1].pion1, self.players[1].pion2]:
             if self.tableau_de_jeu[pion.y][pion.x] == 3:
@@ -177,7 +186,7 @@ class Game:
 
         # Check for win condition
         for pion in [self.players[0].pion1, self.players[0].pion2]:
-            if self.tableau_de_jeu[pion.x][pion.y] == 3:
+            if self.tableau_de_jeu[pion.y][pion.x] == 3:
                 return self.get_state(), 10, True  # Win, positive reward
 
         # Build if valid
@@ -190,11 +199,11 @@ class Game:
         reward = -0.1  # Small penalty for each move to encourage faster wins
 
         # Reward for moving to a higher level
-        if self.tableau_de_jeu[move_pion.x][move_pion.y] > self.tableau_de_jeu[move_pion.x - dx][move_pion.y - dy]:
+        if self.tableau_de_jeu[move_pion.y][move_pion.x] > self.tableau_de_jeu[move_pion.y - dy][move_pion.x - dx]:
             reward += 1
 
         # Penalty for moving to a lower level
-        if self.tableau_de_jeu[move_pion.x][move_pion.y] < self.tableau_de_jeu[move_pion.x - dx][move_pion.y - dy]:
+        if self.tableau_de_jeu[move_pion.y][move_pion.x] < self.tableau_de_jeu[move_pion.y - dy][move_pion.x - dx]:
             reward -= 1
 
         # Reward for blocking opponent's move

@@ -18,11 +18,11 @@ class Pion:
                 if self.player.name != "AI" or self.player.name != "QLearningAgent":
                     print("Cannot Build Here: A builder is on this square.")
                 return False
-        if self.player.game.tableau_de_jeu[new_x][new_y] >= 4:
+        if self.player.game.tableau_de_jeu[new_y][new_x] >= 4:
             if self.player.name != "AI" or self.player.name != "QLearningAgent":
                 print("Cannot Build Here: Cannot build on a dome.")
             return False
-        if self.player.game.tableau_de_jeu[new_x][new_y] + 1 > 4:
+        if self.player.game.tableau_de_jeu[new_y][new_x] + 1 > 4:
             print("\n\n\nNOOOOOOO \n\n\n.")
             if self.player.name != "AI" or self.player.name != "QLearningAgent":
                 print("Cannot Build Here: Cannot build higher than 3.")
@@ -37,8 +37,8 @@ class Pion:
         new_y = self.y + y_build
         print("new_x : ", new_x)
         print("new_y : ", new_y)
-        print("stage : ", self.player.game.tableau_de_jeu[new_x][new_y] + 1)
-        if self.player.game.tableau_de_jeu[new_x][new_y] + 1 > 4:
+        print("stage : ", self.player.game.tableau_de_jeu[new_y][new_x] + 1)
+        if self.player.game.tableau_de_jeu[new_y][new_x] + 1 > 4:
             print("\n\n\nJOSHUA \n\n\n.")
         if 0 <= new_x < 5 and 0 <= new_y < 5:
             self.player.game.tableau_de_jeu[new_y][new_x] += 1
@@ -59,4 +59,7 @@ class Pion:
         return int(self.x), int(self.y)
 
     def getHeight(self):
-        return self.player.game.tableau_de_jeu[self.x][self.y]
+        return self.player.game.tableau_de_jeu[self.y][self.x]
+
+    def getPlayer(self):
+        return self.player

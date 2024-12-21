@@ -1,3 +1,5 @@
+from Game.Heuristique import evaluateGameState
+
 class GameState:
     def __init__(self, game, current_player):
         self.game = game  # The current game instance
@@ -48,7 +50,7 @@ class GameState:
             return False
         for player in self.game.players:
             for pion in [player.pion1, player.pion2]:
-                if self.game.tableau_de_jeu[pion.x][pion.y] == 3:
+                if self.game.tableau_de_jeu[pion.y][pion.x] == 3:
                     print("Player ", player.name, " has won!")
                     return True  # A player has won by reaching the third level
         # Check if the current player can move or build
@@ -59,10 +61,19 @@ class GameState:
 
     def evaluate(self):
         score = 0
+        '''
         for player in self.game.players:
             for pion in [player.pion1, player.pion2]:
                 score += self.game.tableau_de_jeu[pion.x][pion.y]  # Sum the heights of the buildings
         return score if self.current_player == 0 else -score  # Positive score for player 0, negative for player 1
+        '''
+        ai_pawns = [self.game.players[1].pion1, self.game.players[1].pion2]
+        player_pawns = [self.game.players[0].pion1, self.game.players[0].pion2]
+        score = evaluateGameState(self.game.tableau_de_jeu, ai_pawns, player_pawns, self.current_player)
+        print("///// SCORE /////\n")
+        print(score)
+        print("\n")
+        return score
 
     def stateCopy(self):
         new_game = self.game.gameCopy()
