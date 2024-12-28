@@ -23,26 +23,16 @@ class Pion:
                 print("Cannot Build Here: Cannot build on a dome.")
             return False
         if self.player.game.tableau_de_jeu[new_y][new_x] + 1 > 4:
-            print("\n\n\nNOOOOOOO \n\n\n.")
             if self.player.name != "AI" or self.player.name != "QLearningAgent":
                 print("Cannot Build Here: Cannot build higher than 3.")
             return False
         return True
 
     def build(self, x_build, y_build):
-        print("Building for ", self.player.name)
-        print("building x : ", x_build)
-        print("building y : ", y_build)
         new_x = self.x + x_build
         new_y = self.y + y_build
-        print("new_x : ", new_x)
-        print("new_y : ", new_y)
-        print("stage : ", self.player.game.tableau_de_jeu[new_y][new_x] + 1)
-        if self.player.game.tableau_de_jeu[new_y][new_x] + 1 > 4:
-            print("\n\n\nJOSHUA \n\n\n.")
         if 0 <= new_x < 5 and 0 <= new_y < 5:
             self.player.game.tableau_de_jeu[new_y][new_x] += 1
-            print("debug build")
             self.player.game.printBoard()
         else:
             if self.player.name != "AI" or self.player.name != "QLearningAgent":

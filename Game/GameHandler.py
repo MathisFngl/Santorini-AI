@@ -5,6 +5,7 @@ import copy
 from .Heuristique import evaluateGameState, isPawnBlocked
 from .QLearningAgent import QLearningUCB
 from .Heuristique import evaluateGameState
+from .GameServer import GameServer
 
 class Game:
     def __init__(self, skip_initialization=False):
@@ -26,9 +27,10 @@ class Game:
                 q_learning_agent.load_model('q_learning_model.pkl')
             except FileNotFoundError:
                 print("No existing model found. Starting fresh.")
-            q_learning_agent.train(1000)  # Train the Q-learning agent
+            q_learning_agent.train(episodes=10000)  # Train the Q-learning agent
             q_learning_agent.plot_training_progress()
             q_learning_agent.save_model('q_learning_model.pkl')
+            q_learning_agent.save_best_model('best_q_learning_model.pkl')
         elif mode == 4:
             q_learning_agent = QLearningUCB(self)
             self.players = [QLearningAgentPlayer(self), MinMaxPlayer(self)]
@@ -143,6 +145,7 @@ class Game:
         # Move if valid
         if self.players[1].isValidMovement(move_pion, dx, dy):
             self.players[1].move(move_pion, dx, dy)
+            #GameServer.send_message_to_client(f"MOVE {move_pion_id} {dx} {dy}")
         else:
             print("Invalid move")
             return False
@@ -150,12 +153,10 @@ class Game:
         # Build if valid
         if build_pion.isValidBuilding(bx, by):
             build_pion.build(bx, by)
+            #GameServer.send_message_to_client(f"BUILD {bx} {by}")
         else:
             print("Invalid building")
             return False
-
-        print("/// SCORE FINAL ///\n")
-        score = state.evaluate()
 
         for pion in [self.players[1].pion1, self.players[1].pion2]:
             if self.tableau_de_jeu[pion.y][pion.x] == 3:
@@ -177,26 +178,26 @@ class Game:
         move_pion_id, dx, dy, build_pion_id, bx, by = action
         move_pion = self.players[0].pion1 if move_pion_id == 1 else self.players[0].pion2
         build_pion = self.players[0].pion1 if build_pion_id == 1 else self.players[0].pion2
-
+        print("Applying move: ", move_pion_id, dx, dy, build_pion_id, bx, by)
         # Move if valid
         if self.players[0].isValidMovement(move_pion, dx, dy):
             self.players[0].move(move_pion, dx, dy)
         else:
-            return self.get_state(), -1, False  # Invalid move, negative reward
+            return self.get_state(), -10, False  # Invalid move, negative reward
 
         # Check for win condition
         for pion in [self.players[0].pion1, self.players[0].pion2]:
             if self.tableau_de_jeu[pion.y][pion.x] == 3:
-                return self.get_state(), 10, True  # Win, positive reward
+                return self.get_state(), 1000, True  # Win, positive reward
 
         # Build if valid
         if build_pion.isValidBuilding(bx, by):
             build_pion.build(bx, by)
         else:
-            return self.get_state(), -1, False  # Invalid build, negative reward
+            return self.get_state(), -10, False  # Invalid build, negative reward
 
         # Additional rewards and penalties
-        reward = -0.1  # Small penalty for each move to encourage faster wins
+        reward = -0.2  # Small penalty for each move to encourage faster wins
 
         # Reward for moving to a higher level
         if self.tableau_de_jeu[move_pion.y][move_pion.x] > self.tableau_de_jeu[move_pion.y - dy][move_pion.x - dx]:
@@ -210,7 +211,10 @@ class Game:
         opponent = self.players[1]
         for pion in [opponent.pion1, opponent.pion2]:
             if isPawnBlocked(pion,self.tableau_de_jeu, [self.players[0].pion1, self.players[0].pion2]):
-                reward += 0.5
+                reward += 1
+
+        if not self.get_possible_actions(self.get_state()):
+            reward -= 10  # Significant penalty for having no valid moves
 
         return self.get_state(), reward, False  # Continue game
     def get_possible_actions(self, state):
@@ -221,11 +225,14 @@ class Game:
                 for dy in [-1, 0, 1]:
                     if (dx, dy) != (0, 0):
                         if self.players[0].isValidMovement(move_pion, dx, dy):
+                            build_pion_test = move_pion.pionCopy()
+                            build_pion_test.x = build_pion_test.x + dx
+                            build_pion_test.y = build_pion_test.y + dy
                             for bx in [-1, 0, 1]:
                                 for by in [-1, 0, 1]:
                                     if (bx, by) != (0, 0):
-                                        if move_pion.isValidBuilding(bx + dx, by + dy):
-                                            actions.append((move_pion.pionID, dx, dy, move_pion.pionID, bx, by))
+                                        if build_pion_test.isValidBuilding(bx, by):
+                                            actions.append((move_pion_id, dx, dy, move_pion_id, bx, by))
         return actions
 
     def get_state(self):

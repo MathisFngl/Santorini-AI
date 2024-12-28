@@ -61,10 +61,7 @@ class Joueur:
         return True
 
     def move(self, pion, x, y):
-        print("Moving for ", self.name)
         if self.isValidMovement(pion, x, y):
-            print("x : ", x)
-            print("y : ", y)
             pion.x += x
             pion.y += y
             return True
