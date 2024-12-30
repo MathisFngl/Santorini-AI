@@ -5,7 +5,7 @@ import pickle
 import os
 
 class QLearningUCB:
-    def __init__(self, game, alpha=0.02, gamma=0.95, c=0.8):
+    def __init__(self, game, alpha=0.02, gamma=0.95, c=0.6):
         self.game = game
         self.alpha = alpha # Learning rate parameter : higher values mean that the agent will learn faster
         self.gamma = gamma # Discount factor : higher values mean that the agent will care more about future rewards
@@ -95,13 +95,6 @@ class QLearningUCB:
         plt.tight_layout()
         plt.show()
 
-    def save_best_model(self, file_path):
-        if self.best_model is not None:
-            with open(file_path, 'wb') as f:
-                pickle.dump(self.best_model, f)
-            print(f"Best model saved to {file_path}")
-        else:
-            print("No best model to save.")
 
     def save_model(self, file_path):
         # Load existing data if the file exists

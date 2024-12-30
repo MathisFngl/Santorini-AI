@@ -1,25 +1,45 @@
+import sys
+import select
+import msvcrt
 from .Player import Joueur, QLearningAgentPlayer, MinMaxPlayer
 from .Window import *
 import Game.MinMax as MinMax
 import copy
+import threading
 from .Heuristique import evaluateGameState, isPawnBlocked
 from .QLearningAgent import QLearningUCB
 from .Heuristique import evaluateGameState
 from .GameServer import GameServer
 
 class Game:
-    def __init__(self, skip_initialization=False):
+    def __init__(self, skip_initialization=False, isServerActive=False, server=None):
+        self.mode = None
+        self.players = []
+        self.tableau_de_jeu = [[0 for i in range(5)] for j in range(5)]
+        self.mode_set_event = threading.Event()
+        self.mode_set_by_server = False
+        if isServerActive:
+            self.game_server = server
+        self.isServerActive = isServerActive
         if not skip_initialization:
-            self.players = []
-            self.tableau_de_jeu = [[0 for i in range(5)] for j in range(5)]
             self.play()
 
     def play(self):
         win = False
-        mode = self.chooseMode()
-        if mode == 1 or mode == 2:
-            self.choosePlayer()
-        elif mode == 3:
+        self.chooseMode()
+        if self.mode == 1 :
+            player_1 = Joueur(self)
+            self.players.append(player_1)
+            player_2 = Joueur(self)
+            self.players.append(player_2)
+            self.game_server.sendMessageToServer("START")
+        elif self.mode == 2:
+            player_1 = Joueur(self)
+            self.players.append(player_1)
+            player_2 = MinMaxPlayer(self)
+            self.players.append(player_2)
+            self.game_server.sendMessageToServer("START")
+        elif self.mode == 3:
             q_learning_agent = QLearningUCB(self)
             self.players = [QLearningAgentPlayer(self), QLearningAgentPlayer(self)]
             # Load the model if it exists
@@ -30,14 +50,13 @@ class Game:
             q_learning_agent.train(episodes=10000)  # Train the Q-learning agent
             q_learning_agent.plot_training_progress()
             q_learning_agent.save_model('q_learning_model.pkl')
-            q_learning_agent.save_best_model('best_q_learning_model.pkl')
-        elif mode == 4:
+        elif self.mode == 4:
             q_learning_agent = QLearningUCB(self)
             self.players = [QLearningAgentPlayer(self), MinMaxPlayer(self)]
             self.simulate_games(q_learning_agent, 100)  # Simulate 10 games
             q_learning_agent.plot_training_progress()
 
-        while not win and mode != 3 and mode != 4:
+        while not win and self.mode != 3 and self.mode != 4:
             for player in self.players:
                 player_pos_params = self.generatePlayerPos()
                 render_grid(self.tableau_de_jeu, player_pos_params)
@@ -80,26 +99,61 @@ class Game:
                     print()
                     player.buildingHandler(pion)
 
+    def wait_for_mode_set(self):
+        """
+        Bloque jusqu'à ce que le serveur définisse un mode.
+        """
+        self.mode_set_event.wait()  # Attend que le mode soit défini
+        self.mode_set_by_server = True  # Set the flag when mode is set by server
+        print("\nMode défini par le serveur. Interruption de l'entrée utilisateur...")
+
     def chooseMode(self):
-        print("Choose the mode you want to play :")
+        """
+        Permet de choisir un mode, interrompu si le serveur définit le mode avant la saisie.
+        """
+        print("Choose the mode you want to play or wait for the server:")
         print("1. Player vs Player")
         print("2. Player vs AI")
         print("3. Q-Learning Training")
         print("4. Q-Learning vs Minimax")
-        mode = int(input())
-        return mode
 
+        if self.isServerActive:
+            # Démarre un thread pour surveiller si le mode est défini par le serveur
+            watcher_thread = threading.Thread(target=self.wait_for_mode_set, daemon=True)
+            watcher_thread.start()
 
-    def choosePlayer(self):
-        player_1 = Joueur(self)
-        self.players.append(player_1)
-        print("Enter the name of the second player (or type 'AI' for the AI): ")
-        player_2_name = input()
-        if player_2_name == "AI":
-            player_2 = MinMaxPlayer(self)
+        while not self.mode_set_event.is_set():
+            try:
+                if not self.mode_set_by_server:  # Check the flag before reading input
+                    user_input = self.non_blocking_input() if self.isServerActive else input()
+                    if user_input.isdigit():
+                        self.mode = int(user_input)
+                        self.mode_set_event.set()
+                        break
+            except KeyboardInterrupt:
+                print("\nInput interrompu.")
+                break
+
+        if self.mode_set_event.is_set():
+            print(f"Mode sélectionné automatiquement par le serveur : {self.mode}")
         else:
-            player_2 = Joueur(self)
-        self.players.append(player_2)
+            print(f"Mode sélectionné par l'utilisateur : {self.mode}")
+
+    def non_blocking_input(self):
+        """
+        Non-blocking method to read user input.
+        """
+        if msvcrt.kbhit():
+            return input()
+        return ""
+
+    def setMode(self, mode):
+        """
+        Définit le mode de jeu. Peut être appelé par le serveur.
+        """
+        self.mode = mode
+        self.mode_set_event.set()  # Signale que le mode est défini
+        print(f"Mode défini par le serveur : {self.mode}")
 
     def printBoard(self):
         for row in self.tableau_de_jeu:
@@ -145,7 +199,8 @@ class Game:
         # Move if valid
         if self.players[1].isValidMovement(move_pion, dx, dy):
             self.players[1].move(move_pion, dx, dy)
-            #GameServer.send_message_to_client(f"MOVE {move_pion_id} {dx} {dy}")
+            message = f"MOVE {move_pion_id} {dx} {dy}"
+            GameServer.sendMessageToServer(message)
         else:
             print("Invalid move")
             return False
@@ -153,7 +208,8 @@ class Game:
         # Build if valid
         if build_pion.isValidBuilding(bx, by):
             build_pion.build(bx, by)
-            #GameServer.send_message_to_client(f"BUILD {bx} {by}")
+            message = f"BUILD {bx} {by}"
+            GameServer.sendMessageToServer(message)
         else:
             print("Invalid building")
             return False
