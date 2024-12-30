@@ -146,6 +146,7 @@ class MinMaxPlayer(Joueur):
         self.pion1 = self.randomPionDefinition(1)
         self.pion2 = self.randomPionDefinition(2)
 
+
     def randomPionDefinition(self, pionId):
         valid_position = False
         while not valid_position:

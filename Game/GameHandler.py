@@ -1,4 +1,6 @@
 import sys
+from time import sleep
+
 import select
 import msvcrt
 from .Player import Joueur, QLearningAgentPlayer, MinMaxPlayer
@@ -32,13 +34,20 @@ class Game:
             self.players.append(player_1)
             player_2 = Joueur(self)
             self.players.append(player_2)
-            self.game_server.sendMessageToServer("START")
+            #self.game_server.sendMessageToServer("START")
         elif self.mode == 2:
             player_1 = Joueur(self)
             self.players.append(player_1)
+            self.game_server.sendMessageToServer(f"INIT Player1 Perso1 {player_1.pion1.x} {player_1.pion1.y}")
+            #self.game_server.waiting_for_confirmation = True
+            self.game_server.sendMessageToServer(f"INIT Player1 Perso2 {player_1.pion2.x} {player_1.pion2.y}")
+            self.game_server.waiting_for_confirmation = True
             player_2 = MinMaxPlayer(self)
             self.players.append(player_2)
-            self.game_server.sendMessageToServer("START")
+            self.game_server.sendMessageToServer(f"INIT Player2 Perso1 {player_2.pion1.x} {player_2.pion1.y}")
+            #self.game_server.waiting_for_confirmation = True
+            self.game_server.sendMessageToServer(f"INIT Player2 Perso2 {player_2.pion2.x} {player_2.pion2.y}")
+            #self.game_server.waiting_for_confirmation = True
         elif self.mode == 3:
             q_learning_agent = QLearningUCB(self)
             self.players = [QLearningAgentPlayer(self), QLearningAgentPlayer(self)]

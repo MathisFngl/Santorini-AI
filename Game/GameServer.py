@@ -11,6 +11,7 @@ class GameServer:
         self.message_queue = queue.Queue()
         self.connection_accepted = threading.Event()  # Signal pour la connexion
         self.game = None
+        self.waiting_for_confirmation = True  # Indicateur pour attendre la confirmation
 
     def handle_client(self, client_socket):
         self.connection_accepted.set()  # Déclencher le signal
@@ -29,7 +30,8 @@ class GameServer:
         while True:
             client_socket, message = self.message_queue.get()
             response = self.process_message(message)
-            client_socket.send(response.encode('utf-8'))
+            if response:
+                client_socket.send(response.encode('utf-8'))
 
     def process_message(self, message):
         parts = message.split()
@@ -50,6 +52,28 @@ class GameServer:
                 self.game.setMode(mode)
                 print("Starting game in mode: ", mode)
             return "START processed"
+        elif parts[0] == "INIT":
+            if parts[1] == "Player1":
+                if parts[2] == "Perso1":
+                    self.game.players[0].pion1.x = int(parts[3])
+                    self.game.players[0].pion1.y = int(parts[4])
+                elif parts[2] == "Perso2":
+                    self.game.players[0].pion2.x = int(parts[3])
+                    self.game.players[0].pion2.y = int(parts[4])
+            elif parts[1] == "Player2":
+                if parts[2] == "Perso1":
+                    self.game.players[1].pion1.x = int(parts[3])
+                    self.game.players[1].pion1.y = int(parts[4])
+                elif parts[2] == "Perso2":
+                    self.game.players[1].pion2.x = int(parts[3])
+                    self.game.players[1].pion2.y = int(parts[4])
+            print("INIT processed")
+            self.waiting_for_confirmation = True
+            return "INIT processed"
+        elif parts[0] == "CONFIRM":
+            self.waiting_for_confirmation = False
+            print(f"Confirmation received for {parts[1]} {parts[2]}")
+            return None  # Pas de réponse nécessaire pour la confirmation
         return "Unknown command"
 
     def start(self):
@@ -67,3 +91,7 @@ class GameServer:
             client_socket = self.clients[0]
             client_socket.send(message.encode('utf-8'))
             print(f"Sent: {message}")
+            # Attendre la confirmation avant d'envoyer le message suivant
+            while self.waiting_for_confirmation:
+                pass
+
