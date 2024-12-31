@@ -92,6 +92,6 @@ class GameServer:
             client_socket.send(message.encode('utf-8'))
             print(f"Sent: {message}")
             # Attendre la confirmation avant d'envoyer le message suivant
-            while self.waiting_for_confirmation:
-                pass
+            #while self.waiting_for_confirmation:
+                #pass
 
