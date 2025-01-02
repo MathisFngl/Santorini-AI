@@ -110,8 +110,9 @@ class Game:
                         break
                     print("Q-Learning turn ended")
                 else:
-                    while not self.moveReceived:
-                        sleep(0.1)
+                    if self.isServerActive :
+                        while not self.moveReceived:
+                            sleep(0.1)
                     print(player.name + "'s turn :")
                     testMovementHandler, pion = player.movementHandler()
                     if testMovementHandler:
@@ -233,8 +234,8 @@ class Game:
         # Build if valid
         if build_pion.isValidBuilding(bx, by):
             build_pion.build(bx, by)
-
-            self.game_server.sendMessageToServer(f"AI MOVE {move_pion_id} {move_pion.x} {move_pion.y} BUILD {move_pion.x + bx} {move_pion.y + by}")
+            if self.isServerActive:
+                self.game_server.sendMessageToServer(f"AI MOVE {move_pion_id} {move_pion.x} {move_pion.y} BUILD {move_pion.x + bx} {move_pion.y + by}")
         else:
             print("Invalid building")
             return False

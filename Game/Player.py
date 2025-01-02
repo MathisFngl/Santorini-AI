@@ -75,10 +75,20 @@ class Joueur:
 
     def chooseBuilder(self, ask_str):
         while True:
-            print(f"Choose a builder to {ask_str} :")
-            if self.game.moveReceived:  # Check if a move has been received
-                return self.game.moveDirection[0]
-            if msvcrt.kbhit():
+            if self.game.isServerActive:
+                if self.game.moveReceived:  # Check if a move has been received
+                    return self.game.moveDirection[0]
+                if msvcrt.kbhit():
+                    choice = input(f"Which builder to {ask_str} ? (1 or 2)")
+                    if choice == '1':
+                        return self.pion1
+                    elif choice == '2':
+                        return self.pion2
+                    else:
+                        print("Invalid input. Please enter 1 or 2.")
+                else:
+                    sleep(0.1)  # Small delay to prevent busy-waiting
+            else :
                 choice = input(f"Which builder to {ask_str} ? (1 or 2)")
                 if choice == '1':
                     return self.pion1
@@ -86,8 +96,6 @@ class Joueur:
                     return self.pion2
                 else:
                     print("Invalid input. Please enter 1 or 2.")
-            else:
-                sleep(0.1)  # Small delay to prevent busy-waiting
 
     def selectDirection(self, desc_str):
         directions = {
