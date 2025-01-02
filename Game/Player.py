@@ -1,5 +1,7 @@
 from Game.Pion import Pion
 import random
+from time import sleep
+import msvcrt
 
 
 class Joueur:
@@ -10,6 +12,7 @@ class Joueur:
             self.pion1 = Pion(self, -1, -1, 1)
             self.pion2 = Pion(self, -1, -1, 2)
             self.defineBothPions()
+            self.hasMoved = False
 
 
     def nameDefinition(self):
@@ -64,18 +67,27 @@ class Joueur:
         if self.isValidMovement(pion, x, y):
             pion.x += x
             pion.y += y
+            self.hasMoved = True
+            if self.game.isServerActive and self.game.game_server and self.name != "AI" and self.name != "QLearningAgent":
+                self.game.game_server.sendMessageToServer(f"MOVECOMPLETE")
             return True
         return False
 
     def chooseBuilder(self, ask_str):
         while True:
-            choice = input(f"Which builder to {ask_str} ? (1 or 2)")
-            if choice == '1':
-                return self.pion1
-            elif choice == '2':
-                return self.pion2
+            print(f"Choose a builder to {ask_str} :")
+            if self.game.moveReceived:  # Check if a move has been received
+                return self.game.moveDirection[0]
+            if msvcrt.kbhit():
+                choice = input(f"Which builder to {ask_str} ? (1 or 2)")
+                if choice == '1':
+                    return self.pion1
+                elif choice == '2':
+                    return self.pion2
+                else:
+                    print("Invalid input. Please enter 1 or 2.")
             else:
-                print("Invalid input. Please enter 1 or 2.")
+                sleep(0.1)  # Small delay to prevent busy-waiting
 
     def selectDirection(self, desc_str):
         directions = {
@@ -90,17 +102,27 @@ class Joueur:
         }
 
         while True:
-            print("Choose a direction to" + desc_str + " :")
-            print("1: Up-Left    2: Up    3: Up-Right")
-            print("4: Left               5: Right")
-            print("6: Down-Left  7: Down  8: Down-Right")
-            print()
-            choice = input("Enter a number between 1 and 8: ")
+            if self.game.moveReceived:  # Check if a move or build has been received
+                print("Move received")
+                self.game.moveReceived = False  # Reset the move flag
+                return (self.game.moveDirection[1], self.game.moveDirection[2])
+            if self.game.buildReceived:
+                print("Build received")
+                self.game.buildReceived = False
+                return self.game.buildDirection
 
-            if choice in directions:
-                return directions[choice]
-            else:
-                print("Invalid choice. Please choose a number between 1 and 8.")
+            if not self.game.isServerActive:
+                print("Choose a direction to" + desc_str + " :")
+                print("1: Up-Left    2: Up    3: Up-Right")
+                print("4: Left               5: Right")
+                print("6: Down-Left  7: Down  8: Down-Right")
+                print()
+                choice = input("Enter a number between 1 and 8: ")
+
+                if choice in directions:
+                    return directions[choice]
+                else:
+                    print("Invalid choice. Please choose a number between 1 and 8.")
 
     def didWin(self, pion):
         if self.game.tableau_de_jeu[pion.y][pion.x] == 3:
@@ -112,20 +134,20 @@ class Joueur:
         print(f"Current Pion Position: ({pion.x},{pion.y})")
         while not did_do_possible_move:
             movement = self.selectDirection("move")
-            if self.move(pion, movement[0], movement[1]) :
+            if self.move(pion, movement[0], movement[1]):
                 did_do_possible_move = True
-            else :
+            else:
                 print("Invalid move")
         print(f"New Pion Position: ({pion.x},{pion.y})")
         if self.didWin(pion):
             print("You won!")
             return True, pion
-        return False,pion
+        return False, pion
 
-    def buildingHandler(self,pion):
+    def buildingHandler(self, pion):
         did_build = False
         while not did_build:
-            print(f"Current Pion Position: ({pion.x},{pion.y}")
+            print(f"Current Pion Position: ({pion.x},{pion.y})")
             building = self.selectDirection("build")
             if pion.isValidBuilding(building[0], building[1]):
                 pion.build(building[0], building[1])

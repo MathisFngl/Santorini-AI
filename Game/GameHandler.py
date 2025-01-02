@@ -1,8 +1,6 @@
-import sys
+import msvcrt
 from time import sleep
 
-import select
-import msvcrt
 from .Player import Joueur, QLearningAgentPlayer, MinMaxPlayer
 from .Window import *
 import Game.MinMax as MinMax
@@ -20,11 +18,32 @@ class Game:
         self.tableau_de_jeu = [[0 for i in range(5)] for j in range(5)]
         self.mode_set_event = threading.Event()
         self.mode_set_by_server = False
+        self.last_move_x = -1  # Store the last move x coordinate
+        self.last_move_y = -1  # Store the last move y coordinate
+        self.moveReceived = False  # Flag to indicate if a move has been received
+        self.buildReceived = False  # Flag to indicate if a build has been received
+        self.moveDirection = (None, 0, 0)  # Store the direction of the last move
+        self.buildDirection = (0, 0)  # Store the direction of the last build
         if isServerActive:
             self.game_server = server
         self.isServerActive = isServerActive
         if not skip_initialization:
             self.play()
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        # Remove unpicklable entries
+        del state['mode_set_event']
+        if 'game_server' in state:
+            del state['game_server']
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        # Restore the unpicklable entries
+        self.mode_set_event = threading.Event()
+        if self.isServerActive:
+            self.game_server = None
 
     def play(self):
         win = False
@@ -40,10 +59,9 @@ class Game:
             self.players.append(player_1)
             player_2 = MinMaxPlayer(self)
             self.players.append(player_2)
-
-            self.game_server.sendMessageToServer(f"INIT Player1 Perso1 {player_1.pion1.x} {player_1.pion1.y} Perso2 {player_1.pion2.x} "
+            if self.isServerActive :
+                self.game_server.sendMessageToServer(f"INIT Player1 Perso1 {player_1.pion1.x} {player_1.pion1.y} Perso2 {player_1.pion2.x} "
                                                  f"{player_1.pion2.y} Player2 Perso1 {player_2.pion1.x} {player_2.pion1.y} Perso2 {player_2.pion2.x} {player_2.pion2.y}")
-            #self.game_server.waiting_for_confirmation = True
         elif self.mode == 3:
             q_learning_agent = QLearningUCB(self)
             self.players = [QLearningAgentPlayer(self), QLearningAgentPlayer(self)]
@@ -64,7 +82,9 @@ class Game:
         while not win and self.mode != 3 and self.mode != 4:
             for player in self.players:
                 player_pos_params = self.generatePlayerPos()
-                render_grid(self.tableau_de_jeu, player_pos_params)
+                if not self.isServerActive:
+                    render_grid(self.tableau_de_jeu, player_pos_params)
+
 
                 print()
                 print("Board State :")
@@ -77,7 +97,6 @@ class Game:
                 score = evaluateGameState(self.tableau_de_jeu, ai_pawns, player_pawns, 1)
                 print("Score : " + str(score))
                 print()
-
                 if player.name == "AI":
                     print("AI's turn :")
                     if self.ai_turn(1):
@@ -91,12 +110,15 @@ class Game:
                         break
                     print("Q-Learning turn ended")
                 else:
+                    while not self.moveReceived:
+                        sleep(0.1)
                     print(player.name + "'s turn :")
                     testMovementHandler, pion = player.movementHandler()
                     if testMovementHandler:
                         win = True
                         player_pos_params = self.generatePlayerPos()
-                        render_grid(self.tableau_de_jeu, player_pos_params)
+                        if not self.isServerActive:
+                            render_grid(self.tableau_de_jeu, player_pos_params)
                         break
                     print()
                     print("Board State :")
@@ -204,8 +226,6 @@ class Game:
         # Move if valid
         if self.players[1].isValidMovement(move_pion, dx, dy):
             self.players[1].move(move_pion, dx, dy)
-            message = f"MOVE {move_pion_id} {dx} {dy}"
-            GameServer.sendMessageToServer(message)
         else:
             print("Invalid move")
             return False
@@ -213,8 +233,8 @@ class Game:
         # Build if valid
         if build_pion.isValidBuilding(bx, by):
             build_pion.build(bx, by)
-            message = f"BUILD {bx} {by}"
-            GameServer.sendMessageToServer(message)
+
+            self.game_server.sendMessageToServer(f"AI MOVE {move_pion_id} {move_pion.x} {move_pion.y} BUILD {move_pion.x + bx} {move_pion.y + by}")
         else:
             print("Invalid building")
             return False

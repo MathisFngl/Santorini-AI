@@ -36,15 +36,29 @@ class GameServer:
     def process_message(self, message):
         parts = message.split()
         if parts[0] == "MOVE":
-            pion_id = int(parts[1])
-            dx = int(parts[2])
-            dy = int(parts[3])
-            print("Moving pion_id: ", pion_id, "dx: ", dx, "dy: ", dy)
+            pion_id = 1 if parts[1] == "Perso1" else 2
+            target_x = int(parts[2])
+            target_y = int(parts[3])
+            player = self.game.players[0]
+            pion = player.pion1 if pion_id == 1 else player.pion2
+            dx = target_x - pion.x
+            dy = target_y - pion.y
+            self.game.last_move_x = target_x  # Store the last move coordinates
+            self.game.last_move_y = target_y
+            self.game.moveDirection = (pion, dx, dy)
+            self.game.moveReceived = True
             return "MOVE processed"
+
         elif parts[0] == "BUILD":
-            bx = int(parts[1])
-            by = int(parts[2])
-            print("Building in bx: ", bx, "by: ", by)
+            target_x = int(parts[1])
+            target_y = int(parts[2])
+            player = self.game.players[0]
+            pion = player.pion1 if player.pion1.x == target_x and player.pion1.y == target_y else player.pion2
+            bx = target_x - pion.x
+            by = target_y - pion.y
+            self.game.buildDirection = (bx, by)
+            print(f"Built at ({target_x}, {target_y})")
+            self.game.buildReceived = True
             return "BUILD processed"
         elif parts[0] == "START":
             mode = int(parts[1])
