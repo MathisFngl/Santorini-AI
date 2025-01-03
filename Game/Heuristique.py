@@ -343,6 +343,9 @@ def evaluateGameState(tableau, ai_pawns, player_pawns, current_player):
 
     # Evaluate player pawns
     for pawn in player_pawns:
+        x, y = pawn.getCoordinates()
+        if tableau[y][x] == 3:
+            return -10000000
         score_player_pawn = evaluatePawn(pawn, tableau, ai_pawns, player_pawns, -1, current_player)
         if winningPawn(pawn, tableau, ai_pawns+player_pawns):
             win_flag_player = 1
