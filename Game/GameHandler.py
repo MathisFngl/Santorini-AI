@@ -79,11 +79,13 @@ class Game:
             self.simulate_games(q_learning_agent, 100)  # Simulate 10 games
             q_learning_agent.plot_training_progress()
 
+        window = GameRenderer()
         while not win and self.mode != 3 and self.mode != 4:
             for player in self.players:
                 player_pos_params = self.generatePlayerPos()
                 if not self.isServerActive:
-                    render_grid(self.tableau_de_jeu, player_pos_params)
+                    print(player_pos_params)
+                    window.render(self.tableau_de_jeu, player_pos_params)
 
 
                 print()
@@ -119,7 +121,7 @@ class Game:
                         win = True
                         player_pos_params = self.generatePlayerPos()
                         if not self.isServerActive:
-                            render_grid(self.tableau_de_jeu, player_pos_params)
+                            window.render(self.tableau_de_jeu, player_pos_params)
                         break
                     print()
                     print("Board State :")
@@ -244,10 +246,7 @@ class Game:
             if self.tableau_de_jeu[pion.y][pion.x] == 3:
                 print("AI won!")
                 player_pos_params = self.generatePlayerPos()
-                if mode == 1 or mode == 2:
-                    render_grid(self.tableau_de_jeu, player_pos_params)
                 return True
-
         return False
 
     def reset(self):

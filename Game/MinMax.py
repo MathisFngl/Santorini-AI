@@ -11,7 +11,9 @@ class GameState:
         for move_pion in [current_player.pion1, current_player.pion2]:
             for dx in [-1, 0, 1]:
                 for dy in [-1, 0, 1]:
-                    if (dx, dy) != (0, 0):
+                    if (dx, dy) == (0, 0):
+                        continue
+                    else:
                         if current_player.isValidMovement(move_pion, dx, dy):
                             build_pion_test = move_pion.pionCopy()
                             build_pion_test.x = build_pion_test.x + dx
