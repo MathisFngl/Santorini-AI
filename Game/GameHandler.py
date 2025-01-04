@@ -9,7 +9,6 @@ import threading
 from .Heuristique import evaluateGameState, isPawnBlocked
 from .QLearningAgent import QLearningUCB
 from .Heuristique import evaluateGameState
-from .GameServer import GameServer
 
 class Game:
     def __init__(self, skip_initialization=False, isServerActive=False, server=None):
@@ -53,7 +52,6 @@ class Game:
             self.players.append(player_1)
             player_2 = Joueur(self)
             self.players.append(player_2)
-            #self.game_server.sendMessageToServer("START")
         elif self.mode == 2:
             player_1 = Joueur(self)
             self.players.append(player_1)
@@ -135,7 +133,6 @@ class Game:
         """
         self.mode_set_event.wait()  # Attend que le mode soit défini
         self.mode_set_by_server = True  # Set the flag when mode is set by server
-        print("\nMode défini par le serveur. Interruption de l'entrée utilisateur...")
 
     def chooseMode(self):
         """
@@ -161,13 +158,7 @@ class Game:
                         self.mode_set_event.set()
                         break
             except KeyboardInterrupt:
-                print("\nInput interrompu.")
                 break
-
-        if self.mode_set_event.is_set():
-            print(f"Mode sélectionné automatiquement par le serveur : {self.mode}")
-        else:
-            print(f"Mode sélectionné par l'utilisateur : {self.mode}")
 
     def non_blocking_input(self):
         """
@@ -183,7 +174,6 @@ class Game:
         """
         self.mode = mode
         self.mode_set_event.set()  # Signale que le mode est défini
-        print(f"Mode défini par le serveur : {self.mode}")
 
     def printBoard(self):
         for row in self.tableau_de_jeu:

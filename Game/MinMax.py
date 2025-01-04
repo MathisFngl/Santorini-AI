@@ -31,10 +31,8 @@ class GameState:
         move_pion = new_game.players[self.current_player].pion1 if move_pion_id == 1 else new_game.players[self.current_player].pion2
         build_pion = new_game.players[self.current_player].pion1 if build_pion_id == 1 else new_game.players[self.current_player].pion2
         movePlayer = new_game.players[self.current_player]
-        print("Applying move: ", move_pion_id, dx, dy, build_pion_id, bx, by)
         # Move the pion, ensuring the move is valid
         if movePlayer.isValidMovement(move_pion, dx, dy):
-            print("Moving pion")
             movePlayer.move(move_pion, dx, dy)
         else:
             print("Invalid move")
@@ -44,7 +42,6 @@ class GameState:
         else:
             print("Invalid building")
 
-        print(f"New game state ID: {id(new_game)}")
         return GameState(new_game, (self.current_player + 1) % 2)  # Return the new game state with the next player
 
     def is_terminal(self):
@@ -72,9 +69,6 @@ class GameState:
         ai_pawns = [self.game.players[1].pion1, self.game.players[1].pion2]
         player_pawns = [self.game.players[0].pion1, self.game.players[0].pion2]
         score = evaluateGameState(self.game.tableau_de_jeu, ai_pawns, player_pawns, self.current_player)
-        print("///// SCORE /////\n")
-        print(score)
-        print("\n")
         return score
 
     def stateCopy(self):
@@ -82,7 +76,6 @@ class GameState:
         return GameState(new_game, self.current_player)
 
 def minimax(state, depth, alpha, beta, maximizing_player):
-    print("Depth: ", depth)
     if depth == 0 or state.is_terminal():
         return state.evaluate(), []
 
@@ -99,7 +92,6 @@ def minimax(state, depth, alpha, beta, maximizing_player):
             alpha = max(alpha, eval)
             if beta <= alpha:
                 break
-        print("Best move sequence: ", best_move_sequence)
         return max_eval, best_move_sequence
     else:
         min_eval = float('inf')
@@ -113,5 +105,4 @@ def minimax(state, depth, alpha, beta, maximizing_player):
             beta = min(beta, eval)
             if beta <= alpha:
                 break
-        print("Best move sequence: ", best_move_sequence)
         return min_eval, best_move_sequence

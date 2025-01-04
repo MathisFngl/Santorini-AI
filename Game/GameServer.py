@@ -46,6 +46,7 @@ class GameServer:
             self.game.last_move_x = target_x  # Store the last move coordinates
             self.game.last_move_y = target_y
             self.game.moveDirection = (pion, dx, dy)
+            print(f"Moved {pion_id} to ({target_x}, {target_y})")
             self.game.moveReceived = True
             return "MOVE processed"
 
@@ -64,7 +65,6 @@ class GameServer:
             mode = int(parts[1])
             if self.game:
                 self.game.setMode(mode)
-                print("Starting game in mode: ", mode)
             return "START processed"
         elif parts[0] == "INIT":
             if parts[1] == "Player1":
