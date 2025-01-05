@@ -77,13 +77,12 @@ class Game:
             self.simulate_games(q_learning_agent, 100)  # Simulate 10 games
             q_learning_agent.plot_training_progress()
 
-        window = GameRenderer()
         while not win and self.mode != 3 and self.mode != 4:
             for player in self.players:
                 player_pos_params = self.generatePlayerPos()
                 if not self.isServerActive:
-                    print(player_pos_params)
-                    window.render(self.tableau_de_jeu, player_pos_params)
+                    print("Close the game window to continue")
+                    render_grid(self.tableau_de_jeu, player_pos_params)
 
 
                 print()
@@ -119,7 +118,8 @@ class Game:
                         win = True
                         player_pos_params = self.generatePlayerPos()
                         if not self.isServerActive:
-                            window.render(self.tableau_de_jeu, player_pos_params)
+                            print("Close the game window to continue")
+                            render_grid(self.tableau_de_jeu, player_pos_params)
                         break
                     print()
                     print("Board State :")
