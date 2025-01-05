@@ -21,7 +21,7 @@ Avant de commencer, assurez-vous d'avoir les éléments suivants :
    ```bash
    git clone -b main https://github.com/AntoineMilochevitch/Santorini3D.git
     ```
-2. **Ouvrir la scnène Unity**  
+2. **Ouvrir la scène Unity**  
    Ouvrez Unity Hub et ajoutez le dossier du jeu 3D.  
    Ouvrez la scène `Santorini` pour commencer à travailler sur le projet.
 
