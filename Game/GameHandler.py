@@ -1,13 +1,16 @@
 import msvcrt
+import pickle
+import pandas as pd
 from time import sleep
 
-from .Player import Joueur, QLearningAgentPlayer, MinMaxPlayer
+from .Player import Joueur, QLearningAgentPlayer, MinMaxPlayer, OtherQLearningAgentPlayer
 from .Window import *
 import Game.MinMax as MinMax
 import copy
 import threading
 from .Heuristique import evaluateGameState, isPawnBlocked
 from .QLearningAgent import QLearningUCB
+from .OtherQLearningAgent import OtherQLearningAgent
 from .Heuristique import evaluateGameState
 
 class Game:
@@ -76,8 +79,19 @@ class Game:
             self.players = [QLearningAgentPlayer(self), MinMaxPlayer(self)]
             self.simulate_games(q_learning_agent, 100)  # Simulate 10 games
             q_learning_agent.plot_training_progress()
+        elif self.mode == 5:
+            other_agent = OtherQLearningAgent(self)
+            self.players = [OtherQLearningAgentPlayer(self), MinMaxPlayer(self)]
+            try:
+                other_agent.load_model('q_learning_model.pkl')
+            except FileNotFoundError:
+                print("No existing model found. Starting fresh.")
+            other_agent.train(episodes=100)
+            other_agent.plot_training_progress()
+            other_agent.save_model('other_q_learning_model.pkl')
 
-        while not win and self.mode != 3 and self.mode != 4:
+
+        while not win and self.mode != 3 and self.mode != 4 and self.mode != 5:
             for player in self.players:
                 player_pos_params = self.generatePlayerPos()
                 if not self.isServerActive:
@@ -143,6 +157,7 @@ class Game:
         print("2. Player vs AI")
         print("3. Q-Learning Training")
         print("4. Q-Learning vs Minimax")
+        print("5. Other Q-Learning Training")
 
         if self.isServerActive:
             # Démarre un thread pour surveiller si le mode est défini par le serveur
@@ -239,10 +254,14 @@ class Game:
                 return True
         return False
 
-    def reset(self):
+    def reset(self, i):
         self.tableau_de_jeu = [[0 for _ in range(5)] for _ in range(5)]
-        self.players = [QLearningAgentPlayer(self),
-                        QLearningAgentPlayer(self)]
+        if i == 0:
+            self.players = [QLearningAgentPlayer(self),
+                            QLearningAgentPlayer(self)]
+        elif i == 1:
+            self.players = [OtherQLearningAgentPlayer(self),
+                            OtherQLearningAgentPlayer(self)]
         return self.get_state()
 
     def step(self, action):
@@ -288,6 +307,7 @@ class Game:
             reward -= 10  # Significant penalty for having no valid moves
 
         return self.get_state(), reward, False  # Continue game
+
     def get_possible_actions(self, state):
         actions = []
         for move_pion_id in [1, 2]:
@@ -322,7 +342,7 @@ class Game:
 
     def simulate_games(self, q_learning_agent, num_games):
         for _ in range(num_games):
-            self.reset()
+            self.reset(0)
             print("Game number: ", _)
             done = False
             while not done:

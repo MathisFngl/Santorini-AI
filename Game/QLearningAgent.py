@@ -46,7 +46,7 @@ class QLearningUCB:
         total_wins = 0
         for episode in range(episodes):
             print("game number : ", episode)
-            state = self.game.reset()
+            state = self.game.reset(0)
             self.game.printBoard()
             done = False
             episode_reward = 0

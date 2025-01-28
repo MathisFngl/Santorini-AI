@@ -204,3 +204,21 @@ class QLearningAgentPlayer(Joueur):
                 if pionId == 1 or (self.pion1.x != x or self.pion1.y != y):
                     valid_position = True
         return Pion(self, x, y, pionId)
+
+class OtherQLearningAgentPlayer(Joueur):
+    def nameDefinition(self):
+        return "OtherQLearningAgent"
+
+    def defineBothPions(self):
+        self.pion1 = self.randomPionDefinition(1)
+        self.pion2 = self.randomPionDefinition(2)
+
+    def randomPionDefinition(self, pionId):
+        valid_position = False
+        while not valid_position:
+            x = random.randint(0, 4)
+            y = random.randint(0, 4)
+            if not self.game.isOccupied(x, y):
+                if pionId == 1 or (self.pion1.x != x or self.pion1.y != y):
+                    valid_position = True
+        return Pion(self, x, y, pionId)
